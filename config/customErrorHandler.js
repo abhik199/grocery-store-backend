@@ -12,7 +12,7 @@ class customErrorHandler extends Error {
     return new customErrorHandler(400, message);
   }
 
-  static wrongCredentials(message = "Incorrect password") {
+  static wrongCredentials(message = "Incorrect  username and password") {
     return new customErrorHandler(401, message);
   }
   static notFound(message = "not found") {

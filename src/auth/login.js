@@ -18,7 +18,7 @@ exports.userLogin = async (req, res, next) => {
       where: { email: email },
     });
     if (!user) {
-      return next(customErrorHandler.notFound());
+      return next(customErrorHandler.wrongCredentials());
     }
     console.log(user.password, password);
 
@@ -27,7 +27,7 @@ exports.userLogin = async (req, res, next) => {
     if (!match) {
       return next(customErrorHandler.wrongCredentials());
     }
-    if (user.isVerify !== true) {
+    if (user.is_verify !== true) {
       return res.status(404).json({ message: "User is not verified" });
     }
 
@@ -50,7 +50,7 @@ exports.userLogin = async (req, res, next) => {
       { expiresIn: "1y" }
     );
     const createToken = await refreshTokenModel.create({
-      refreshToken: refresh_token,
+      refresh_tokens: refresh_token,
     });
     if (!createToken) {
       return res.status(500).json({ error: "Failed to create refresh token" });
@@ -66,6 +66,7 @@ exports.userLogin = async (req, res, next) => {
         refresh_token: refresh_token,
       });
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };

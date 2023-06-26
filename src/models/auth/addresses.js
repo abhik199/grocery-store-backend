@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../config/database");
-const User = require("./register");
+const Users = require("./register");
 
 const Addresses = sequelize.define("addresses", {
   id: {
@@ -36,19 +36,19 @@ const Addresses = sequelize.define("addresses", {
   users: {
     type: DataTypes.INTEGER,
     references: {
-      model: User,
+      model: Users,
       key: "id",
     },
   },
 });
 
-User.hasMany(Addresses, {
+Addresses.sync({ alter: true });
+
+Users.hasMany(Addresses, {
   foreignKey: "users",
 });
-Addresses.belongsTo(User, {
+Addresses.belongsTo(Users, {
   foreignKey: "users",
 });
 
-Addresses.sync({});
-
-module.exports = { Addresses };
+module.exports = Addresses;

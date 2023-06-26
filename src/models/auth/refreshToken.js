@@ -1,19 +1,19 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../config/database");
 
-const RefreshToken = sequelize.define("refreshToken", {
+const RefreshToken = sequelize.define("refresh_token", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     allowNull: false,
     primaryKey: true,
   },
-  refreshToken: {
+  refresh_token: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
   },
 });
 
-RefreshToken.sync({});
-module.exports = { RefreshToken };
+RefreshToken.sync({ alter: true });
+module.exports = RefreshToken;

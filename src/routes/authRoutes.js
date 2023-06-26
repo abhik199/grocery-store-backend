@@ -24,7 +24,6 @@ routes.post(
 // GET
 routes.get("/verify_email", SignupCtr.verifyEmail); // User Click This Routes send email
 routes.get("/forgot_password", ForgotPasswordCtr.renderPage); // Hit this url Fronted Page Open
-
 // PATCH
 // DELETE
 

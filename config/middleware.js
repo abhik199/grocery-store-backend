@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../config/config");
 
 const auth = async (req, res, next) => {
   try {
@@ -11,7 +10,7 @@ const auth = async (req, res, next) => {
     }
     const token = authHeader.split(" ")[1];
     try {
-      const { id, email } = await jwt.verify(token, JWT_SECRET);
+      const { id, email } = await jwt.verify(token, process.env.JWT_SECRET);
       console.log(id, email);
       const user = {
         id,

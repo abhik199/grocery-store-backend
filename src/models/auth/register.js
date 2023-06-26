@@ -21,15 +21,15 @@ const Users = sequelize.define("user", {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  isVerify: {
+  is_verify: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  expirationTime: {
+  expiration_time: {
     type: DataTypes.DATE,
     allowNull: false,
   },
-  verificationToken: {
+  verification_token: {
     type: DataTypes.STRING,
     allowNull: true,
   },
@@ -39,6 +39,6 @@ const Users = sequelize.define("user", {
   },
 });
 
-Users.sync();
+Users.sync({ alter: true });
 
-module.exports = { Users };
+module.exports = Users;

@@ -1,11 +1,11 @@
 const customErrorHandler = require("./customErrorHandler");
-const { DEBUG_MODE } = require("../config/config");
+require("dotenv").config();
 
 const errorHandler = (error, req, res, next) => {
   let statusCode = 500;
   let data = {
     message: "Internal server error",
-    ...(DEBUG_MODE === "true" && { originalError: error.message }),
+    ...(process.env.DEBUG_MODE === "true" && { originalError: error.message }),
   };
   if (error instanceof customErrorHandler) {
     statusCode = error.status;

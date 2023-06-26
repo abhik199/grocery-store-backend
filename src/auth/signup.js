@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
+const url = process.env.url;
 
 const { userModel, addressesModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
@@ -15,7 +16,7 @@ const generateVerificationToken = () => {
   return crypto.randomBytes(20).toString("hex");
 };
 
-const signup = async (name, email, verificationToken) => {
+const signup = async (name, email, verification_token) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -27,7 +28,7 @@ const signup = async (name, email, verificationToken) => {
         pass: process.env.password,
       },
     });
-    const email_url = `${url}verify_email?verificationToken=${verificationToken}&email=${email}`;
+    const email_url = `${url}/auth/verify_email?verificationToken=${verification_token}&email=${email}`;
     ejs.renderFile(
       path.join(process.cwd(), "views/email.ejs"),
       { email_url, name },
@@ -62,9 +63,8 @@ exports.userRegistration = async (req, res, next) => {
     return next(customErrorHandler.requiredField());
   }
   try {
-    const users = await userModel.findOne({
-      where: { email: email },
-    });
+    const users = await userModel.findOne({ where: { email: email } });
+
     if (users) {
       if (req.file.filename) {
         const folderPath = path.join(process.cwd(), "public/profile");
@@ -84,8 +84,8 @@ exports.userRegistration = async (req, res, next) => {
     const expirationTime = new Date();
     expirationTime.setMinutes(expirationTime.getMinutes() + 30); // 30 minute
     user.password = hashPassword;
-    user.verificationToken = verificationToken;
-    user.expirationTime = expirationTime;
+    user.verification_token = verificationToken;
+    user.expiration_time = expirationTime;
 
     const createUser = await userModel.create(user);
     if (!createUser || !createUser.length === 0) {
@@ -100,7 +100,7 @@ exports.userRegistration = async (req, res, next) => {
       message: "User created successfully",
     });
 
-    signup(user.name, user.email, user.verificationToken);
+    signup(user.name, user.email, user.verification_token);
 
     if (req.file !== undefined && !req.file.length > 0) {
       const imageUrl = req.file.filename;
@@ -133,19 +133,20 @@ exports.verifyEmail = async (req, res, next) => {
     const { email, verificationToken } = req.query;
 
     const findToken = await userModel.findOne({
-      where: { verificationToken: verificationToken },
+      where: { verification_token: verificationToken },
     });
 
-    if (!findToken || findToken.expirationTime < new Date()) {
+    if (!findToken || findToken.expiration_time < new Date()) {
       res.status(400).send("Wrong & Expired Token");
     }
 
     const updateUser = await userModel.update(
       {
-        isVerify: true,
-        verificationToken: "null",
+        is_verify: true,
+        verification_token: "null",
+        expiration_time: "null",
       },
-      { where: { verificationToken: verificationToken } }
+      { where: { verification_token: verificationToken } }
     );
 
     if (!updateUser) {

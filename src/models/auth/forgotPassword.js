@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../config/database");
 
-const forgotPassword = sequelize.define("ForgotPassword", {
+const forgotPassword = sequelize.define("forgot_password", {
   id: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -13,12 +13,12 @@ const forgotPassword = sequelize.define("ForgotPassword", {
     allowNull: true,
     unique: true,
   },
-  expirationTime: {
+  expiration_time: {
     type: DataTypes.DATE,
     allowNull: false,
   },
 });
 
-forgotPassword.sync();
+forgotPassword.sync({ alter: true });
 
-module.exports = { forgotPassword };
+module.exports = forgotPassword;
