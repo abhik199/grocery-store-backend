@@ -1,8 +1,10 @@
+require("dotenv").config();
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const path = require("path");
 const ejs = require("ejs");
+const Url = process.env.url;
 
 const { userModel, forgotPasswordModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
@@ -26,17 +28,17 @@ const Forgot = async (name, email, key) => {
         pass: process.env.password,
       },
     });
-    const resetPasswordLink = `${url}forgot_password?key=${key}&email=${email}`;
+    const resetPasswordLink = `${Url}/auth/forgot_password?key=${key}&email=${email}`;
 
     ejs.renderFile(
-      path.join(process.cwd() + "views/forgot.ejs"),
+      path.join(process.cwd(), "views/forgot.ejs"),
       { resetPasswordLink, name },
       (err, data) => {
         if (err) {
           console.log(err);
         }
         const message = {
-          from: config.email,
+          from: "Forgot Password Mail",
           to: email,
           subject: "Forgot Password Mail",
           html: data,
@@ -63,8 +65,8 @@ exports.requestForgotPassword = async (req, res, next) => {
   try {
     // Check email id
     const user = await userModel.findOne({ where: { email: email } });
-    if (!findEmail) {
-      return next(customErrorHandler.notFound());
+    if (!user) {
+      return next(customErrorHandler.notFound("username not found"));
     }
     const resetPasswordToken = generateVerificationToken();
     const expirationTime = new Date();
@@ -72,7 +74,7 @@ exports.requestForgotPassword = async (req, res, next) => {
 
     const storeToken = await forgotPasswordModel.create({
       key: resetPasswordToken,
-      expirationTime: expirationTime,
+      expiration_time: expirationTime,
     });
     if (!storeToken) {
       return res.status(400).json({

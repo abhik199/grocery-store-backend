@@ -8,7 +8,10 @@ const Users = sequelize.define("user", {
     primaryKey: true,
     autoIncrement: true,
   },
-  name: {
+  first_name: {
+    type: DataTypes.STRING,
+  },
+  last_name: {
     type: DataTypes.STRING,
   },
   email: {
@@ -33,12 +36,12 @@ const Users = sequelize.define("user", {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  role: {
-    type: DataTypes.STRING,
+  roles: {
+    type: DataTypes.ENUM("user", "admin"), // Pass the allowed
     defaultValue: "user",
   },
 });
 
-Users.sync({ alter: true });
+Users.sync();
 
 module.exports = Users;

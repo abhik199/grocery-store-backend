@@ -6,7 +6,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
-const url = process.env.url;
+const Url = process.env.url;
 
 const { userModel, addressesModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
@@ -28,7 +28,7 @@ const signup = async (name, email, verification_token) => {
         pass: process.env.password,
       },
     });
-    const email_url = `${url}/auth/verify_email?verificationToken=${verification_token}&email=${email}`;
+    const email_url = `${Url}/auth/verify_email?verificationToken=${verification_token}&email=${email}`;
     ejs.renderFile(
       path.join(process.cwd(), "views/email.ejs"),
       { email_url, name },
@@ -58,8 +58,8 @@ const signup = async (name, email, verification_token) => {
 };
 
 exports.userRegistration = async (req, res, next) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) {
+  const { first_name, last_name, email, password } = req.body;
+  if (!first_name || !last_name || !email || !password) {
     return next(customErrorHandler.requiredField());
   }
   try {

@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -17,9 +18,9 @@ app.use(
 );
 
 // Api Routes
-
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/product", require("./routes/userRoutes"));
+app.use("/admin", require("./routes/adminRoutes"));
 
 app.use(require("../config/errorHandler"));
 

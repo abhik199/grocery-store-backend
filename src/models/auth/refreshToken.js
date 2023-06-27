@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../config/database");
+const user = require("./register");
 
 const RefreshToken = sequelize.define("refresh_token", {
   id: {
@@ -8,12 +9,27 @@ const RefreshToken = sequelize.define("refresh_token", {
     allowNull: false,
     primaryKey: true,
   },
-  refresh_token: {
+  token: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
   },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: user,
+      key: "id",
+    },
+  },
 });
 
-RefreshToken.sync({ alter: true });
+user.hasMany(RefreshToken, {
+  foreignKey: "userId",
+});
+RefreshToken.belongsTo(user, {
+  foreignKey: "userId",
+});
+
+RefreshToken.sync();
 module.exports = RefreshToken;

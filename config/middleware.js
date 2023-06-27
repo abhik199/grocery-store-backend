@@ -6,12 +6,16 @@ const auth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      res.status(401).send("UnAuthorization user");
+      res.status(401).json({ message: "unauthorized user1" });
     }
     const token = authHeader.split(" ")[1];
+
     try {
-      const { id, email } = await jwt.verify(token, process.env.JWT_SECRET);
-      console.log(id, email);
+      const { id, email, role } = await jwt.verify(
+        token,
+        process.env.JWT_SECRET
+      );
+
       const user = {
         id,
         email,
@@ -20,7 +24,8 @@ const auth = async (req, res, next) => {
       req.user = user;
       next();
     } catch (error) {
-      res.status(401).send("UnAuthorization user");
+      console.log(error);
+      res.status(401).json({ message: "unauthorized user" });
     }
   } catch (error) {
     console.log(error);
@@ -28,4 +33,4 @@ const auth = async (req, res, next) => {
   }
 };
 
-module.exports = { auth };
+module.exports = auth;

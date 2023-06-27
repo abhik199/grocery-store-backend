@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const { userModel, refreshTokenModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
+const generateTokens = require("../utils/generateTokens");
 const { JWT_SECRET, REFRESH_SECRET } = process.env;
 
 exports.userLogin = async (req, res, next) => {
@@ -20,10 +21,9 @@ exports.userLogin = async (req, res, next) => {
     if (!user) {
       return next(customErrorHandler.wrongCredentials());
     }
-    console.log(user.password, password);
 
     const match = await bcrypt.compare(password, user.password);
-    console.log(match);
+
     if (!match) {
       return next(customErrorHandler.wrongCredentials());
     }
@@ -34,39 +34,20 @@ exports.userLogin = async (req, res, next) => {
     if (req.cookies.access_token) {
       return res.json({ msg: "user already logging" });
     }
+    const { accessToken, refreshToken } = await generateTokens(user);
 
-    const access_token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
-
-    // Refresh Token
-    const refresh_token = await jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      REFRESH_SECRET,
-      { expiresIn: "1y" }
-    );
-    const createToken = await refreshTokenModel.create({
-      refresh_tokens: refresh_token,
-    });
-    if (!createToken) {
-      return res.status(500).json({ error: "Failed to create refresh token" });
-    }
-
-    return res
-      .cookie("access_token", access_token, {
+    res
+      .cookie("access_token", accessToken, {
         httpOnly: true,
       })
+      .status(200)
       .json({
-        success: true,
-        access_token: access_token,
-        refresh_token: refresh_token,
+        status: true,
+        accessToken,
+        refreshToken,
+        message: "Logged in successfully",
       });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
