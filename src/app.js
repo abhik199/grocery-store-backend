@@ -18,13 +18,9 @@ const { connect } = require("../config/database");
 // );
 app.use(cors());
 
-app.use("/", (req, res) => {
-  console.log("Hello World");
-});
-
 // Api Routes
 app.use("/auth", require("./routes/authRoutes"));
-app.use("/product", require("./routes/userRoutes"));
+app.use("/user", require("./routes/userRoutes"));
 app.use("/admin", require("./routes/adminRoutes"));
 
 app.use(require("../config/errorHandler"));

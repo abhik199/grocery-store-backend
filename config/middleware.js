@@ -38,14 +38,15 @@ const admin = async (req, res, next) => {
   try {
     const user = await userModel.findOne({ where: { email: req.user.email } });
     if (!user) {
-      return res.status(400).json({ message: "Something went wrong" });
+      return res.status(400).json({ message: "User not valid" });
     }
     if (user.roles === "admin") {
       next();
     } else {
-      return res
-        .status(401)
-        .json({ status: false, message: "unAuthorized admin" });
+      return res.status(401).json({
+        status: false,
+        message: "You are not authorized to access this resource.",
+      });
     }
   } catch (error) {
     return next(error);

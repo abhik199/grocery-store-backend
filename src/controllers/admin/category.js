@@ -60,3 +60,19 @@ exports.deleteCategory = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.getCategory = async (req, res, next) => {
+  try {
+    const category = await categoryModel.findAll({
+      attributes: { exclude: ["createdAt", "updatedAt"] },
+    });
+    if (!category && !category.length > 1) {
+      return res
+        .status(400)
+        .json({ status: false, message: "category not found" });
+    }
+    return res.status(200).json({ status: false, data: category });
+  } catch (error) {
+    return next(error);
+  }
+};
