@@ -9,7 +9,7 @@ const Addresses = sequelize.define("addresses", {
     primaryKey: true,
     autoIncrement: true,
   },
-  name: {
+  full_name: {
     type: DataTypes.STRING,
   },
   contact: {
@@ -33,7 +33,7 @@ const Addresses = sequelize.define("addresses", {
   address_type: {
     type: DataTypes.STRING,
   },
-  users: {
+  userId: {
     type: DataTypes.INTEGER,
     references: {
       model: Users,
@@ -42,13 +42,13 @@ const Addresses = sequelize.define("addresses", {
   },
 });
 
-Addresses.sync({ alter: true });
+Addresses.sync();
 
 Users.hasMany(Addresses, {
-  foreignKey: "users",
+  foreignKey: "userId",
 });
 Addresses.belongsTo(Users, {
-  foreignKey: "users",
+  foreignKey: "userId",
 });
 
 module.exports = Addresses;

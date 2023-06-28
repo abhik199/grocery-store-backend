@@ -30,22 +30,33 @@ exports.userLogin = async (req, res, next) => {
     if (user.is_verify !== true) {
       return res.status(404).json({ message: "User is not verified" });
     }
-
     if (req.cookies.access_token) {
-      return res.json({ msg: "user already logging" });
+      return res.json({ msg: "already logging" });
     }
-    const { accessToken, refreshToken } = await generateTokens(user);
+    let accessToken;
+    let refreshToken;
+    let message;
 
-    res
+    if (user.roles === "user") {
+      ({ accessToken, refreshToken } = await generateTokens(user));
+      message = "Hello user";
+    }
+
+    if (user.roles === "admin") {
+      ({ accessToken, refreshToken } = await generateTokens(user));
+      message = "Hello admin";
+    }
+
+    return res
+      .status(200)
       .cookie("access_token", accessToken, {
         httpOnly: true,
       })
-      .status(200)
       .json({
         status: true,
         accessToken,
         refreshToken,
-        message: "Logged in successfully",
+        message: message || "Logged in successfully",
       });
   } catch (error) {
     return next(error);
