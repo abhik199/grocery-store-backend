@@ -35,4 +35,24 @@ const product = sequelize.define("product", {
   tag: {
     type: DataTypes.STRING,
   },
+  stock: {
+    type: DataTypes.INTEGER,
+  },
+  thumbnail: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  description: {
+    type: DataTypes.STRING,
+  },
 });
+
+product.sync();
+category.hasMany(product, {
+  foreignKey: "categoryId",
+});
+product.belongsTo(category, {
+  foreignKey: "categoryId",
+});
+
+module.exports = product;

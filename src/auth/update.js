@@ -8,11 +8,15 @@ exports.userUpdate = async (req, res, next) => {
     return res.status(400).json({ message: "ID is required." });
   }
 
-  const { name } = req.body;
+  const { first_name, last_name } = req.body;
   const updateFields = {};
 
-  if (name) {
-    updateFields.name = name;
+  if (first_name) {
+    updateFields.first_name = first_name;
+  }
+
+  if (last_name) {
+    updateFields.last_name = last_name;
   }
 
   try {
@@ -55,7 +59,7 @@ exports.userUpdate = async (req, res, next) => {
     if (!updatedRows) {
       res.status(400).json({ message: "Update failed" });
     }
-    res.status(200).json({ message: "Update successful" });
+    res.status(200).json({ message: "update successful" });
   } catch (error) {
     return next(error);
   }

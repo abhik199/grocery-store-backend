@@ -1,4 +1,5 @@
-const { categoryModel } = require("../../models/models");
+const { categoryModel, productModel } = require("../../models/models");
+const customErrorHandler = require("../../../config/errorHandler");
 
 exports.createCategory = async (req, res, next) => {
   const { name } = req.body;
@@ -72,6 +73,43 @@ exports.getCategory = async (req, res, next) => {
         .json({ status: false, message: "category not found" });
     }
     return res.status(200).json({ status: false, data: category });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.productSearchByCategory = async (req, res, next) => {
+  if (!req.query.query) {
+    return res
+      .status(400)
+      .json({ status: false, message: "query is required" });
+  }
+  try {
+    const category = await categoryModel.findOne({
+      where: { name: req.query.query },
+    });
+    if (!category || category.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Category not found" });
+    }
+    // Check product base on id
+
+    const product = await productModel.findAll({
+      where: { categoryId: category.id },
+      include: {
+        model: categoryModel,
+        attributes: { exclude: ["createdAt", "updatedAt"] },
+      },
+    });
+    if (!product || product.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Product not found" });
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: "Products found", product });
   } catch (error) {
     return next(error);
   }

@@ -28,36 +28,43 @@ exports.userLogin = async (req, res, next) => {
       return next(customErrorHandler.wrongCredentials());
     }
     if (user.is_verify !== true) {
-      return res.status(404).json({ message: "User is not verified" });
+      return res.status(404).json({ message: "not verified" });
     }
-    if (req.cookies.access_token) {
-      return res.json({ msg: "already logging" });
-    }
-    let accessToken;
-    let refreshToken;
-    let message;
+    const users = await userModel.findOne({
+      where: { email: email },
+      attributes: {
+        exclude: [
+          "createdAt",
+          "updatedAt",
+          "roles",
+          "verification_token",
+          "expiration_time",
+          "is_verify",
+          "password",
+        ],
+      },
+    });
+    // if (req.cookies.access_token) {
+    //   return res.json({ msg: "already logging" });
+    // }
+    // const authHeader = req.headers.authorization;
+    // const token = authHeader.split(" ")[1];
+    // if (!token) {
+    //   return res.send("Where is token");
+    // }
+    // const token_check = await jwt.verify(token, JWT_SECRET);
+    // if (token_check) {
+    //   return res.status(401).json({ status: false, message: "" });
+    // }
 
-    if (user.roles === "user") {
-      ({ accessToken, refreshToken } = await generateTokens(user));
-      message = "Hello user";
-    }
+    accessToken = await generateTokens(user);
 
-    if (user.roles === "admin") {
-      ({ accessToken, refreshToken } = await generateTokens(user));
-      message = "Hello admin";
-    }
-
-    return res
-      .status(200)
-      .cookie("access_token", accessToken, {
-        httpOnly: true,
-      })
-      .json({
-        status: true,
-        accessToken,
-        refreshToken,
-        message: message || "Logged in successfully",
-      });
+    return res.status(200).json({
+      status: true,
+      accessToken,
+      message: "Logged in successfully",
+      user: users,
+    });
   } catch (error) {
     return next(error);
   }

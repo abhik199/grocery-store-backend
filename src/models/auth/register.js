@@ -27,7 +27,7 @@ const Users = sequelize.define("user", {
   },
   is_verify: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    defaultValue: true,
   },
   expiration_time: {
     type: DataTypes.DATE,

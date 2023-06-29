@@ -6,7 +6,7 @@ const path = require("path");
 const fileStorage = multer.diskStorage({
   //   destination: "./public/product",
   destination: (req, file, cb) => {
-    if (file.fieldname === "product_images") {
+    if (file.fieldname === "product_images" || file.fieldname === "thumbnail") {
       cb(null, path.join(process.cwd(), "public/product"));
     } else if (file.fieldname === "profile") {
       cb(null, path.join(process.cwd(), "public/profile"));

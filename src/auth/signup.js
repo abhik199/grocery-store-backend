@@ -60,8 +60,11 @@ const signup = async (name, email, verification_token) => {
 exports.userRegistration = async (req, res, next) => {
   const { first_name, last_name, email, password } = req.body;
   if (!first_name || !last_name || !email || !password) {
-    return next(customErrorHandler.requiredField());
+    return res
+      .status(400)
+      .json({ status: false, message: "Missing required field" });
   }
+
   try {
     const users = await userModel.findOne({ where: { email: email } });
 
@@ -91,13 +94,13 @@ exports.userRegistration = async (req, res, next) => {
     if (!createUser || !createUser.length === 0) {
       res.status(400).json({
         status: false,
-        message: "Failed to create user",
+        message: "Registration Failed",
       });
       return;
     }
     res.status(201).json({
       status: true,
-      message: "User created successfully",
+      message: "Registration Successfully",
     });
 
     signup(user.name, user.email, user.verification_token);
