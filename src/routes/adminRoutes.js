@@ -1,7 +1,7 @@
 const routes = require("express").Router();
 const { CategoryCtr, ProductCtr } = require("../controllers/controller");
 const { auth, admin } = require("../../config/middleware");
-const upload = require("./multer");
+const { upload } = require("./multer");
 // category
 routes.post("/category", [auth, admin], CategoryCtr.createCategory);
 routes.patch("/category/:id", [auth, admin], CategoryCtr.updateCategory);
