@@ -1,10 +1,7 @@
-// import multer from "multer";
-// import path from "path";
 const multer = require("multer");
 const path = require("path");
 
 const fileStorage = multer.diskStorage({
-  //   destination: "./public/product",
   destination: (req, file, cb) => {
     if (file.fieldname === "product_images" || file.fieldname === "thumbnail") {
       cb(null, path.join(process.cwd(), "public/product"));
@@ -24,7 +21,7 @@ const fileStorage = multer.diskStorage({
   },
 });
 
-exports.imageUpload = multer({
+const upload = multer({
   storage: fileStorage,
   limits: {
     fileSize: 5000000, // 5000000 Bytes = 5 MB
@@ -32,8 +29,10 @@ exports.imageUpload = multer({
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(png|jpg)$/)) {
       // upload only png and jpg format
-      return cb(new Error("Please upload a Image"));
+      return cb(new Error("Please upload an Image"));
     }
-    cb(undefined, true);
+    cb(null, true);
   },
 });
+
+module.exports = upload;

@@ -1,12 +1,8 @@
-require("dotenv").config();
-const { DataTypes } = require("sequelize");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 
-const { userModel, refreshTokenModel } = require("../models/models");
+const { userModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
 const generateTokens = require("../utils/generateTokens");
-const { JWT_SECRET, REFRESH_SECRET } = process.env;
 
 exports.userLogin = async (req, res, next) => {
   const { email, password } = req.body;
@@ -19,6 +15,7 @@ exports.userLogin = async (req, res, next) => {
       where: { email: email },
     });
     if (!user) {
+      console.log(user.email);
       return next(customErrorHandler.wrongCredentials());
     }
 
@@ -30,6 +27,7 @@ exports.userLogin = async (req, res, next) => {
     if (user.is_verify !== true) {
       return res.status(404).json({ message: "not verified" });
     }
+    console.log(user.email);
     const users = await userModel.findOne({
       where: { email: email },
       attributes: {
@@ -44,18 +42,6 @@ exports.userLogin = async (req, res, next) => {
         ],
       },
     });
-    // if (req.cookies.access_token) {
-    //   return res.json({ msg: "already logging" });
-    // }
-    // const authHeader = req.headers.authorization;
-    // const token = authHeader.split(" ")[1];
-    // if (!token) {
-    //   return res.send("Where is token");
-    // }
-    // const token_check = await jwt.verify(token, JWT_SECRET);
-    // if (token_check) {
-    //   return res.status(401).json({ status: false, message: "" });
-    // }
 
     accessToken = await generateTokens(user);
 

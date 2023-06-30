@@ -6,3 +6,4 @@ exports.LogoutCtr = require("./logout");
 exports.UpdateCtr = require("./update");
 exports.RefreshTokenCtr = require("./refreshToken");
 exports.AddressCtr = require("./address");
+exports.ProfileCtr = require("./profile");

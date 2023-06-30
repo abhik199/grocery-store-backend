@@ -1,5 +1,5 @@
 const routes = require("express").Router();
-const {SignupCtr,LoginCtr,ChangePasswordCtr,ForgotPasswordCtr,LogoutCtr,UpdateCtr,RefreshTokenCtr,AddressCtr} = require("../auth/auth");
+const {SignupCtr,LoginCtr,ChangePasswordCtr,ForgotPasswordCtr,LogoutCtr,UpdateCtr,RefreshTokenCtr,AddressCtr,ProfileCtr} = require("../auth/auth");
 const { imageUpload } = require("./multer");
 const {auth} = require("../../config/middleware");
 
@@ -18,11 +18,13 @@ routes.get('/logout',auth,LogoutCtr.logoutUser)
 routes.patch("/update/:id", auth, imageUpload.single('profile'), UpdateCtr.userUpdate);
 
 // address 
-routes.post('/address', AddressCtr.createAddress)
-routes.patch('/address/:id', AddressCtr.updateAddress)
-routes.delete('/delete_address',AddressCtr.deleteAddress)
+routes.get("/address", auth, AddressCtr.fetchAddressByUser);
+routes.post('/address', auth, AddressCtr.createAddress);
+routes.patch('/address/:id', auth, AddressCtr.updateAddress);
+routes.delete('/address/:id', auth, AddressCtr.deleteAddress);
 
-// routes.patch('/address',AddressCtr)
+// profile 
+routes.get('/profile',auth,ProfileCtr.getProfile)
 
 
 module.exports = routes;
