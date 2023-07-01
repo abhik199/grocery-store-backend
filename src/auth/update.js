@@ -4,7 +4,8 @@ const path = require("path");
 const fs = require("fs");
 
 exports.userUpdate = async (req, res, next) => {
-  if (!req.params.id) {
+  const { id } = req.user;
+  if (!id) {
     return res.status(400).json({ message: "ID is required." });
   }
 
@@ -20,7 +21,7 @@ exports.userUpdate = async (req, res, next) => {
   }
 
   try {
-    const userId = await userModel.findOne({ where: { id: req.params.id } });
+    const userId = await userModel.findOne({ where: { id: id } });
     if (!userId) {
       return res.status(400).json({ message: "Id not valid" });
     }

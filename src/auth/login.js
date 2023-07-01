@@ -15,15 +15,19 @@ exports.userLogin = async (req, res, next) => {
       where: { email: email },
     });
     if (!user) {
-      console.log(user.email);
-      return next(customErrorHandler.wrongCredentials());
+      return res
+        .status(400)
+        .json({ status: false, message: "Email does not exist" });
     }
 
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
-      return next(customErrorHandler.wrongCredentials());
+      return res
+        .status(400)
+        .json({ status: false, message: "Incorrect password" });
     }
+
     if (user.is_verify !== true) {
       return res.status(404).json({ message: "not verified" });
     }

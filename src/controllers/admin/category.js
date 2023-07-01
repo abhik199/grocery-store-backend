@@ -25,9 +25,11 @@ exports.createCategory = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "category created failed" });
     }
-    return res
-      .status(201)
-      .json({ status: false, message: "category created " });
+    return res.status(201).json({
+      status: false,
+      message: "category created",
+      categoryId: category.id,
+    });
   } catch (error) {
     return next(error);
   }

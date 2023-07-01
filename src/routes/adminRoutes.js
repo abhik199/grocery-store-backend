@@ -10,10 +10,10 @@ routes.delete("/category/:id", [auth, admin], CategoryCtr.deleteCategory);
 // product
 routes.post(
   "/product",
-  [auth, admin],
-  upload.single("thumbnail"),
   upload.array("product_images", 5),
   ProductCtr.createProducts
 );
+
+routes.delete("/product/:id", ProductCtr.deleteProduct);
 
 module.exports = routes;

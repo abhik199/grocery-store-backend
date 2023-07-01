@@ -5,27 +5,16 @@ const {
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/customErrorHandler");
 const { Op } = require("sequelize");
+const path = require("path");
+const fs = require("fs");
 
 exports.createProducts = async (req, res, next) => {
-  const {
-    name,
-    price,
-    brand,
-    discount_price,
-    categoryId,
-    tag,
-    stock,
-    thumbnail,
-  } = req.body;
+  const { name, price, brand, discount_price, categoryId, tag, stock } =
+    req.body;
   if (!name || !price || !discount_price || !brand || !stock || !categoryId) {
     return next(customErrorHandler.requiredField());
   }
-  if (!req.file.filename) {
-    return res
-      .status(400)
-      .json({ status: false, message: "thumbnail image required" });
-  }
-  console.log(req.file.filename);
+
   try {
     const selling_price = price;
     const discounted_price = discount_price;
@@ -60,6 +49,18 @@ exports.createProducts = async (req, res, next) => {
           });
           productImages.push(imagePath);
         }
+        // add thumbnail image  first image ;
+        console.log(productImages[0]);
+
+        const thumbnail_image = await productModel.update(
+          {
+            thumbnail: productImages[0],
+          },
+          {
+            where: { id: Product.id },
+            returning: true,
+          }
+        );
       } catch (error) {
         const fileNames = imageFiles.map((img) => {
           return img.filename;
@@ -79,38 +80,45 @@ exports.createProducts = async (req, res, next) => {
     return next(error);
   }
 };
-exports.getProduct = async (req, res) => {
+exports.getProduct = async (req, res, next) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
-    const { name } = req.query;
+    const { name, category } = req.query;
 
     const whereCondition = {};
 
     if (name) {
       whereCondition.name = { [Op.like]: `%${name}%` };
     }
-    //
+
+    if (category) {
+      whereCondition["$category.name$"] = { [Op.like]: `%${category}%` };
+    }
+
     const { count, rows: products } = await productModel.findAndCountAll({
       where: whereCondition,
       attributes: {
-        exclude: ["createdAt", "updatedAt", "categoryId", "thumbnail"],
+        exclude: [
+          "createdAt",
+          "updatedAt",
+          "stock",
+          "description",
+          "discount_percentage",
+        ],
       },
       include: [
         {
           model: categoryModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },
         },
-        {
-          model: productImgModel,
-          attributes: { exclude: ["createdAt", "updatedAt", "productId"] },
-        },
       ],
       offset: offset,
       limit: limit,
     });
+
     const counts = await productModel.count();
 
     if (count === 0) {
@@ -120,7 +128,7 @@ exports.getProduct = async (req, res) => {
       });
     }
 
-    const totalPages = Math.ceil(count / limit);
+    const totalPages = Math.ceil(counts / limit);
 
     return res.status(200).json({
       status: true,
@@ -146,7 +154,7 @@ exports.getSingleProduct = async (req, res, next) => {
   try {
     const product = await productModel.findOne({
       attributes: {
-        exclude: ["createdAt", "updatedAt", "categoryId", "thumbnail"],
+        exclude: ["createdAt", "updatedAt"],
       },
       where: { id: id },
       include: [
@@ -156,7 +164,7 @@ exports.getSingleProduct = async (req, res, next) => {
         },
         {
           model: productImgModel,
-          attributes: { exclude: ["createdAt", "updatedAt", "productId"] },
+          attributes: { exclude: ["createdAt", "updatedAt"] },
         },
       ],
     });
@@ -166,6 +174,80 @@ exports.getSingleProduct = async (req, res, next) => {
         .json({ status: false, message: "product not found" });
     }
     return res.status(200).json({ status: false, product });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.updateProduct = async (req, res, next) => {
+  const { id } = req.params;
+  if (!id) {
+    return res
+      .status(400)
+      .json({ status: false, message: "product id required" });
+  }
+  const [count, updatedRows] = await productModel.update(
+    { ...req.body },
+    { where: { id: id }, returning: true }
+  );
+
+  if (count === 0) {
+    return res.status(400).json({ status: false, message: "Update failed" });
+  }
+
+  // for image update ;
+  // image update pending ;
+
+  try {
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteProduct = async (req, res, next) => {
+  const { id } = req.params;
+  if (!id) {
+    return res
+      .status(400)
+      .json({ status: false, message: "product id required" });
+  }
+  try {
+    // delete in locally
+    const img_models = await productImgModel.findAll({
+      where: { productId: id },
+    });
+    if (!img_models) {
+      return res
+        .status(400)
+        .json({ status: false, message: "product id not valid" });
+    }
+
+    const imageFiles = img_models.images;
+    const fileNames = imageFiles.map((img) => {
+      return img.filename;
+    });
+    const folderPath = path.join(process.cwd(), "public/product");
+    fileNames.forEach((fileName) => {
+      const filePath = path.join(folderPath, fileName);
+      fs.unlink(filePath, (error) => {
+        if (error) {
+          console.log(`Failed to delete: ${error.message}`);
+        }
+      });
+    });
+    // delete image in database
+    await productImgModel.destroy({ productId: id });
+    // delete all product
+    const delete_product = await productModel.destroy({ id: id });
+
+    if (!delete_product) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Product Delete failed" });
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: "Product Delete successfully" });
   } catch (error) {
     return next(error);
   }

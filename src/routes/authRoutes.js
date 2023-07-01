@@ -14,8 +14,9 @@ routes.post('/refresh-token',RefreshTokenCtr.refreshToken)
 // GET
 routes.get("/verify_email", SignupCtr.verifyEmail); // User Click This Routes send email
 routes.get("/forgot_password", ForgotPasswordCtr.renderPage); // Hit this url Fronted Page Open
-routes.get('/logout',auth,LogoutCtr.logoutUser)
-routes.patch("/update/:id", auth, upload.single('profile'), UpdateCtr.userUpdate);
+routes.get('/logout', auth, LogoutCtr.logoutUser)
+
+routes.patch("/update", auth, upload.single('profile'), UpdateCtr.userUpdate);
 
 // address 
 routes.get("/address", auth, AddressCtr.fetchAddressByUser);
@@ -24,7 +25,7 @@ routes.patch('/address/:id', auth, AddressCtr.updateAddress);
 routes.delete('/address/:id', auth, AddressCtr.deleteAddress);
 
 // profile 
-routes.get('/profile',auth,ProfileCtr.getProfile)
+routes.get('/profile', auth, ProfileCtr.getProfile);
 
 
 module.exports = routes;
