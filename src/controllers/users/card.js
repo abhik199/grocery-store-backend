@@ -22,10 +22,9 @@ exports.fetchCartByUser = async (req, res, next) => {
   }
 };
 
-exports.addToCart = async (req, res) => {
+exports.addToCart = async (req, res, next) => {
   const { id: userId } = req.user;
   const { productId, quantity } = req.body;
-  console.log(userId);
   if (!quantity) {
     return res
       .status(400)
@@ -36,6 +35,12 @@ exports.addToCart = async (req, res) => {
   }
 
   try {
+    const count = await cardModel.findOne({ where: { productId: productId } });
+    if (count) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Product is already added" });
+    }
     const cart = await cardModel.create({
       quantity: quantity,
       productId: productId,
@@ -61,17 +66,20 @@ exports.addToCart = async (req, res) => {
   }
 };
 
-exports.deleteFromCart = async (req, res) => {
+exports.deleteFromCart = async (req, res, next) => {
   const { id } = req.params;
   try {
-    const cart = await cardModel.findByPk(id);
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
+    const card = await cardModel.findOne({ where: { id: id } });
+    if (!card) {
+      return res.status(400).json({ status: false, message: "card not found" });
     }
-
-    await cardModel.destroy();
-
-    res.status(200).json({ message: "Cart item deleted successfully" });
+    const delete_item = await cardModel.destroy({ where: { id: card.id } });
+    if (!delete_item) {
+      return res.status(400).json({ status: false, message: "delete failed" });
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: 'Cart item deleted successfully"' });
   } catch (error) {
     return next(error);
   }
@@ -79,6 +87,9 @@ exports.deleteFromCart = async (req, res) => {
 
 exports.updateCart = async (req, res, next) => {
   const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({ status: false, message: "" });
+  }
   try {
     const [rowsUpdated, [updatedCart]] = await cardModel.update(req.body, {
       where: { id: id },
