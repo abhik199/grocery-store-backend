@@ -8,37 +8,49 @@ const { Op } = require("sequelize");
 
 // admin
 exports.createCategory = async (req, res, next) => {
-  const name = req.body.name;
-  console.log(name);
-  if (!name) {
-    return res
-      .status(400)
-      .json({ status: false, message: "category is required" });
-  }
   try {
-    // check category exist in database
-    const check_category = await categoryModel.findAll({
-      where: { name: name },
-    });
-    if (!check_category) {
-      return res
-        .status(400)
-        .json({ status: false, message: "category is already exist " });
+    const name = req.body.name;
+    if (!name) {
+      return next(customErrorHandler.requiredField());
     }
-
-    const category = await categoryModel.create({ name: name });
-    if (!category) {
-      return res
-        .status(400)
-        .json({ status: false, message: "category created failed" });
+    const insertCategory = await categoryModel.create({ name: name });
+    if (!insertCategory || insertCategory.length === 0) {
+      res.status(400).json({
+        status: false,
+        message: "Category create failed",
+      });
     }
-    return res.status(201).json({
+    res.status(201).json({
       status: true,
-      message: "category created",
-      categoryId: category.id,
+      message: "category create successfully",
     });
+
+    // Image Upload
+    if (req.file !== undefined && !req.file.length > 0) {
+      const image_url = `${req.file.filename}`;
+      try {
+        await categoryModel.update(
+          {
+            category_images: image_url,
+          },
+          {
+            where: {
+              id: insertCategory.id,
+            },
+            returning: true,
+          }
+        );
+      } catch (error) {
+        const folderPath = path.join(process.cwd(), "public/category");
+        const filePath = path.join(folderPath, image_url);
+        fs.unlink(filePath, (error) => {
+          if (error) {
+            console.log(`Failed to delete: ${error.message}`);
+          }
+        });
+      }
+    }
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };

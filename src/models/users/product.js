@@ -47,11 +47,12 @@ const product = sequelize.define("product", {
   },
 });
 
-product.sync();
+product.sync({ alter: true });
 category.hasMany(product, {
   foreignKey: "categoryId",
 });
 product.belongsTo(category, {
+  through: "ProductCategory",
   foreignKey: "categoryId",
 });
 

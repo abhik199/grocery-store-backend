@@ -7,8 +7,8 @@ const fileStorage = multer.diskStorage({
       cb(null, path.join(process.cwd(), "public/product"));
     } else if (file.fieldname === "profile") {
       cb(null, path.join(process.cwd(), "public/profile"));
-    } else if (file.fieldname === "icon") {
-      cb(null, path.join(process.cwd(), "public/icons"));
+    } else if (file.fieldname === "category_image") {
+      cb(null, path.join(process.cwd(), "public/category"));
     } else {
       console.log(`multer problem ${file.fieldname}`);
     }

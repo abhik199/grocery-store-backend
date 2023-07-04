@@ -15,6 +15,7 @@ exports.createProducts = async (req, res, next) => {
   if (!name || !price || !discount_price || !brand || !stock || !categoryId) {
     return next(customErrorHandler.requiredField());
   }
+  console.log(categoryId);
 
   try {
     const selling_price = price;
@@ -34,14 +35,6 @@ exports.createProducts = async (req, res, next) => {
       });
     }
 
-    const categories = await categoryModel.findAll({
-      where: {
-        id: categoryId,
-      },
-    });
-
-    await product.addCategories(categories);
-
     if (req.files !== undefined && req.files.length > 0) {
       const imageFiles = req.files;
 
@@ -59,8 +52,6 @@ exports.createProducts = async (req, res, next) => {
         await product.update({
           thumbnail: productImages[0],
         });
-
-        console.log(productImages[0]);
       } catch (error) {
         const fileNames = imageFiles.map((img) => {
           return img.filename;
@@ -86,13 +77,13 @@ exports.createProducts = async (req, res, next) => {
   }
 };
 
-exports.getProduct = async (req, res, next) => {
+exports.fetchAllProducts = async (req, res, next) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
-    const { name, category, minPrice, maxPrice } = req.query;
+    const { name } = req.query;
 
     const whereCondition = {};
 
@@ -100,28 +91,10 @@ exports.getProduct = async (req, res, next) => {
       whereCondition.name = { [Op.like]: `%${name}%` };
     }
 
-    if (category) {
-      whereCondition["$category.name$"] = { [Op.like]: `%${category}%` };
-    }
-
-    if (minPrice && maxPrice) {
-      whereCondition.price = { [Op.between]: [minPrice, maxPrice] };
-    } else if (minPrice) {
-      whereCondition.price = { [Op.gte]: minPrice };
-    } else if (maxPrice) {
-      whereCondition.price = { [Op.lte]: maxPrice };
-    }
-
     const { count, rows: products } = await productModel.findAndCountAll({
       where: whereCondition,
       attributes: {
-        exclude: [
-          "createdAt",
-          "updatedAt",
-          "stock",
-          "description",
-          "discount_percentage",
-        ],
+        exclude: ["createdAt", "updatedAt"],
       },
       include: [
         {
@@ -157,7 +130,7 @@ exports.getProduct = async (req, res, next) => {
   }
 };
 
-exports.getSingleProduct = async (req, res, next) => {
+exports.fetchProductById = async (req, res, next) => {
   const { id } = req.params;
   if (!id) {
     return res
@@ -193,6 +166,70 @@ exports.getSingleProduct = async (req, res, next) => {
   }
 };
 
+exports.deleteProduct = async (req, res, next) => {
+  const id = req.params.id;
+  if (!id) {
+    return res
+      .status(400)
+      .json({ status: false, message: "product id required" });
+  }
+  try {
+    // delete in locally
+    const productId = await productModel.findOne({ where: { id: id } });
+    if (!productId) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Product id wrong" });
+    }
+    const findImg = await productImgModel.findAll({
+      where: { productId: productId.id },
+      attributes: {
+        exclude: ["createdAt", "updatedAt"],
+      },
+    });
+    // return res.send(findImg);
+    if (findImg.length === 0 && String(productId.id)) {
+      const delete_img = await productModel.destroy({ where: { id: id } });
+      if (!delete_img) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Failed to delete" });
+      }
+      return res
+        .status(200)
+        .json({ status: true, message: "delete successfully" });
+    }
+    const fileNames = findImg.map((img) => {
+      return img.images;
+    });
+    console.log(fileNames);
+    const folderPath = path.join(process.cwd(), "public/product");
+    fileNames.forEach((fileName) => {
+      const filePath = path.join(folderPath, fileName);
+      fs.unlink(filePath, (error) => {
+        if (error) {
+          console.log(`Failed to delete: ${error.message}`);
+        }
+      });
+    });
+    // delete image in database
+    await productImgModel.destroy({ where: { productId: id } });
+    // delete all product
+    const delete_product = await productModel.destroy({ where: { id: id } });
+
+    if (!delete_product) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Product Delete failed" });
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: "Product Delete successfully" });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.updateProduct = async (req, res, next) => {
   const { id } = req.params;
   if (!id) {
@@ -208,60 +245,7 @@ exports.updateProduct = async (req, res, next) => {
   if (count === 0) {
     return res.status(400).json({ status: false, message: "Update failed" });
   }
-
-  // for image update ;
-  // image update pending ;
-
   try {
-  } catch (error) {
-    return next(error);
-  }
-};
-
-exports.deleteProduct = async (req, res, next) => {
-  const { id } = req.params;
-  if (!id) {
-    return res
-      .status(400)
-      .json({ status: false, message: "product id required" });
-  }
-  try {
-    // delete in locally
-    const img_models = await productImgModel.findAll({
-      where: { productId: id },
-    });
-    if (!img_models) {
-      return res
-        .status(400)
-        .json({ status: false, message: "product id not valid" });
-    }
-
-    const imageFiles = img_models.images;
-    const fileNames = imageFiles.map((img) => {
-      return img.filename;
-    });
-    const folderPath = path.join(process.cwd(), "public/product");
-    fileNames.forEach((fileName) => {
-      const filePath = path.join(folderPath, fileName);
-      fs.unlink(filePath, (error) => {
-        if (error) {
-          console.log(`Failed to delete: ${error.message}`);
-        }
-      });
-    });
-    // delete image in database
-    await productImgModel.destroy({ productId: id });
-    // delete all product
-    const delete_product = await productModel.destroy({ id: id });
-
-    if (!delete_product) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Product Delete failed" });
-    }
-    return res
-      .status(200)
-      .json({ status: true, message: "Product Delete successfully" });
   } catch (error) {
     return next(error);
   }
