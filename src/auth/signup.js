@@ -103,7 +103,7 @@ exports.userRegistration = async (req, res, next) => {
       message: "Registration Successfully",
     });
 
-    signup(user.name, user.email, user.verification_token);
+    // signup(user.name, user.email, user.verification_token);    // use only production time
 
     if (req.file !== undefined && !req.file.length > 0) {
       const imageUrl = req.file.filename;

@@ -46,6 +46,7 @@ exports.createProducts = async (req, res, next) => {
             productId: product.id,
             images: imagePath,
           });
+          console.log(imagePath);
           productImages.push(imagePath);
         }
 
@@ -247,6 +248,126 @@ exports.updateProduct = async (req, res, next) => {
   }
   try {
   } catch (error) {
+    return next(error);
+  }
+};
+
+// Image Section
+// as single image delete and multiple image delete
+
+exports.deleteImage = async (req, res, next) => {
+  const ids = req.params.ids;
+  if (!ids) {
+    return res
+      .status(400)
+      .json({ status: false, message: "image id required" });
+  }
+  const imageIds = ids.split("-");
+  try {
+    const images = await productImgModel.findAll({
+      where: {
+        id: imageIds,
+      },
+    });
+
+    const fileUrl = images.map((img) => {
+      return img.images;
+    });
+
+    const fileNames = fileUrl.map((imageUrl) => {
+      return imageUrl;
+    });
+    console.log(fileNames);
+    const folderPath = path.join(process.cwd(), "public/product"); // Adjust
+
+    fileNames.forEach((fileName) => {
+      const filePath = path.join(folderPath, fileName);
+
+      fs.unlink(filePath, (error) => {
+        if (error) {
+          console.log(`Failed to delete ${fileName}: ${error.message}`);
+        }
+      });
+    });
+
+    if (!images || images.length === 0) {
+      return res
+        .status(400)
+        .json({ status: false, message: "image not found" });
+    }
+    await productImgModel.destroy({
+      where: {
+        id: imageIds,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Images deleted successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.updateImage = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Image id required" });
+    }
+    if (req.file !== undefined) {
+      const image_id = await productImgModel.findOne({ where: { id: id } });
+      console.log(image_id);
+      if (!image_id) {
+        res.status(400).json({ status: false, message: "image not found" });
+        const folderPath = path.join(process.cwd(), "public/product");
+
+        const filePath = path.join(folderPath, req.file.filename);
+        fs.unlink(filePath, (error) => {
+          if (error) {
+            console.log(`Failed to delete: ${error.message}`);
+          }
+        });
+        return;
+      }
+      // delete image in locally
+      const folderPath = path.join(process.cwd(), "public/product");
+
+      const filePath = path.join(folderPath, image_id.images);
+      fs.unlink(filePath, (error) => {
+        if (error) {
+          console.log(`Failed to delete${error.message}`);
+        }
+      });
+      // update in database
+      const image_update = await productImgModel.update(
+        {
+          images: req.file.filename,
+        },
+        { where: { id: id }, returning: true }
+      );
+      if (!image_update) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Image update Failed" });
+      }
+      return res
+        .status(200)
+        .json({ status: false, message: "image update successfully" });
+    }
+    return res.status(200).json({ message: "please select product image" });
+  } catch (error) {
+    const folderPath = path.join(process.cwd(), "public/product");
+
+    const filePath = path.join(folderPath, req.file.filename);
+    fs.unlink(filePath, (error) => {
+      if (error) {
+        console.log(`Failed to delete${error.message}`);
+      }
+    });
     return next(error);
   }
 };

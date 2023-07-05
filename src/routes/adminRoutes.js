@@ -25,6 +25,15 @@ routes.get("/product/:id", [auth, admin], adminProduct.fetchProductById);
 routes.patch("/product/:id", [auth, admin], adminProduct.updateProduct);
 routes.delete("/product/:id", [auth, admin], adminProduct.deleteProduct);
 
+// product image
+routes.delete("/product_image/:ids", [auth, admin], adminProduct.deleteImage);
+routes.patch(
+  "/product_image/:id",
+  [auth, admin],
+  upload.single("product_images"),
+  adminProduct.updateImage
+);
+
 // user order
 routes.get("/order", [auth, admin]);
 routes.get("/order/:id", [auth, admin]);
