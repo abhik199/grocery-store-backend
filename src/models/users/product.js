@@ -56,4 +56,9 @@ product.belongsTo(category, {
   foreignKey: "categoryId",
 });
 
+product.belongsToMany(category, {
+  through: "product_category",
+  foreignKey: "productId",
+});
+
 module.exports = product;

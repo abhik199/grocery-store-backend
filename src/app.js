@@ -18,7 +18,11 @@ const { connect } = require("../config/database");
 //     origin: "http://localhost:4500",
 //   })
 // );
-app.use(cors());
+app.use(
+  cors({
+    exposedHeaders: ["X-Total Count "], // for pagination
+  })
+);
 app.use(express.static("public"));
 
 // Api Routes

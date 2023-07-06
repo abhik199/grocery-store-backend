@@ -16,6 +16,7 @@ const Category = sequelize.define("category", {
     type: DataTypes.STRING,
   },
 });
-Category.sync({ alter: true });
+
+Category.sync({ alter: false });
 
 module.exports = Category;

@@ -13,6 +13,9 @@ const card = sequelize.define("card", {
   quantity: {
     type: DataTypes.INTEGER,
   },
+  subtotal: {
+    type: DataTypes.INTEGER,
+  },
   productId: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -34,22 +37,18 @@ const card = sequelize.define("card", {
 // product
 product.hasMany(card, {
   foreignKey: "productId",
-  as: "cards", // Provide a unique alias for the association
 });
 card.belongsTo(product, {
   foreignKey: "productId",
-  as: "product", // Provide a unique alias for the association
 });
 
 // user
 user.hasMany(card, {
   foreignKey: "userId",
-  as: "cards",
 });
 card.belongsTo(user, {
   foreignKey: "userId",
-  as: "user",
 });
 
-card.sync();
+card.sync({ alter: true });
 module.exports = card;

@@ -1,5 +1,9 @@
 const routes = require("express").Router();
-const { adminCategory, adminProduct } = require("../controllers/controller");
+const {
+  adminCategory,
+  adminProduct,
+  adminOrder,
+} = require("../controllers/controller");
 const { auth, admin } = require("../../config/middleware");
 const { upload } = require("./multer");
 // category
@@ -9,7 +13,12 @@ routes.post(
   upload.single("category_image"),
   adminCategory.createCategory
 );
-routes.patch("/category/:id", [auth, admin], adminCategory.updateCategory);
+routes.patch(
+  "/category/:id",
+  [auth, admin],
+  upload.single("category_image"),
+  adminCategory.updateCategory
+);
 routes.delete("/category/:id", [auth, admin], adminCategory.deleteCategory);
 routes.get("/category", [auth, admin], adminCategory.getCategory);
 routes.get("/category/:id", [auth, admin], adminCategory.getSingleCategory);
@@ -35,7 +44,7 @@ routes.patch(
 );
 
 // user order
-routes.get("/order", [auth, admin]);
+routes.get("/order", [auth, admin], adminOrder.fetchOrdersByAmin);
 routes.get("/order/:id", [auth, admin]);
 routes.patch("/order/:id", [auth, admin]);
 

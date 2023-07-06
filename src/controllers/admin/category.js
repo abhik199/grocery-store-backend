@@ -5,6 +5,8 @@ const {
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/errorHandler");
 const { Op } = require("sequelize");
+const path = require("path");
+const fs = require("fs");
 
 // admin
 exports.createCategory = async (req, res, next) => {
@@ -57,6 +59,7 @@ exports.createCategory = async (req, res, next) => {
 
 // admin
 exports.updateCategory = async (req, res, next) => {
+  console.log(req.body);
   const id = req.params.id;
   if (!id) {
     return res
@@ -72,10 +75,39 @@ exports.updateCategory = async (req, res, next) => {
       { name: req.body.name },
       { where: { id: id }, returning: true }
     );
+    if (req.file !== undefined) {
+      const image_url = `${req.file.filename}`;
+      try {
+        console.log(req.file.filename);
+        const a = await categoryModel.update(
+          {
+            category_images: req.file.filename,
+          },
+          {
+            where: {
+              id: update_category.id,
+            },
+            returning: true,
+          }
+        );
+        console.log(a);
+        res.status(200).json({ status: true, message: "Update successfully" });
+      } catch (error) {
+        const folderPath = path.join(process.cwd(), "public/category");
+        const filePath = path.join(folderPath, image_url);
+        fs.unlink(filePath, (error) => {
+          if (error) {
+            console.log(`Failed to delete: ${error.message}`);
+          }
+        });
+      }
+    }
     if (!update_category) {
       return res.status(400).json({ status: false, message: "Update failed" });
     }
-    return res.status.json({ status: true, message: "Update successfully" });
+    return res
+      .status(200)
+      .json({ status: true, message: "Update successfully" });
   } catch (error) {
     return next(error);
   }

@@ -1,14 +1,26 @@
-const { cardModel, productModel } = require("../../models/models");
+const { cardModel, productModel, userModel } = require("../../models/models");
 
 exports.fetchCartByUser = async (req, res, next) => {
   const { id } = req.user;
   try {
     const cartItems = await cardModel.findAll({
       where: { userId: id },
+      attributes: { exclude: ["createdAt", "updatedAt"] },
       include: [
         {
           model: productModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
+          attributes: {
+            exclude: [
+              "createdAt",
+              "updatedAt",
+              "description",
+              "tag",
+              "discount_price",
+              "discount_percentage",
+              "stock",
+              "brand",
+            ],
+          },
         },
       ],
     });
@@ -35,32 +47,70 @@ exports.addToCart = async (req, res, next) => {
   }
 
   try {
-    const count = await cardModel.findOne({ where: { productId: productId } });
-    if (count) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Product is already added" });
-    }
-    const cart = await cardModel.create({
-      quantity: quantity,
-      productId: productId,
-      userId: userId,
+    const find_productId = await productModel.findOne({
+      where: { id: productId },
     });
 
-    const result = await cardModel.findOne({
-      where: { id: cart.id },
-      include: [
-        {
-          model: productModel,
-          as: "product",
-          attributes: { exclude: ["createdAt", "updatedAt"] },
-        },
-      ],
-    });
-    if (!result) {
-      return res.status(400).json({ status: false, message: "card created" });
+    if (!find_productId) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Product ID wrong" });
     }
-    return res.status(201).json({ status: true, message: "card found", cart });
+
+    if (!(quantity <= find_productId.stock)) {
+      return res.status(400).json({
+        message: "Insufficient stock",
+        available_Stock: find_productId.stock,
+      });
+    }
+
+    const count = await cardModel.findOne({ where: { productId: productId } });
+
+    if (count) {
+      const updateOld = await cardModel.update(
+        { quantity: quantity, subtotal: find_productId.price * quantity },
+        { where: { id: count.id }, returning: true }
+      );
+
+      await update_Stock(find_productId, quantity);
+
+      if (!updateOld) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Failed to update card" });
+      }
+
+      return res
+        .status(200)
+        .json({ status: true, message: "Card updated successfully" });
+    } else {
+      const cart = await cardModel.create({
+        quantity: req.body.quantity,
+        productId: productId,
+        userId: userId,
+        subtotal: find_productId.price * quantity,
+      });
+
+      if (!cart) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Failed to create card" });
+      }
+      await update_Stock(find_productId, quantity);
+
+      return res
+        .status(201)
+        .json({ status: true, message: "Card created successfully" });
+    }
+
+    async function update_Stock(find_productId, quantity) {
+      const [affectedRows] = await productModel.update(
+        {
+          stock: find_productId.stock - quantity,
+        },
+        { where: { id: find_productId.id } }
+      );
+    }
   } catch (error) {
     return next(error);
   }

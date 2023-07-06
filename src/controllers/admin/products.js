@@ -2,9 +2,10 @@ const {
   productModel,
   productImgModel,
   categoryModel,
+  productCategory,
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/customErrorHandler");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const path = require("path");
 const fs = require("fs");
 
@@ -15,7 +16,6 @@ exports.createProducts = async (req, res, next) => {
   if (!name || !price || !discount_price || !brand || !stock || !categoryId) {
     return next(customErrorHandler.requiredField());
   }
-  console.log(categoryId);
 
   try {
     const selling_price = price;
@@ -35,7 +35,7 @@ exports.createProducts = async (req, res, next) => {
       });
     }
 
-    if (req.files !== undefined && req.files.length > 0) {
+    if (req.files !== undefined) {
       const imageFiles = req.files;
 
       try {
@@ -50,9 +50,37 @@ exports.createProducts = async (req, res, next) => {
           productImages.push(imagePath);
         }
 
-        await product.update({
-          thumbnail: productImages[0],
-        });
+        await product.update(
+          {
+            thumbnail: productImages[0],
+          },
+          { where: { id: product.id }, returning: true }
+        );
+        // add multiple category  in category modules
+        const category = [categoryId]; // Assuming you have an array of category IDs
+
+        const product_category = []; // Initialize an empty array outside the loop
+
+        for (let i = 0; i < category.length; i++) {
+          const categoryId = category[i];
+
+          try {
+            const createdProductCategory = await productCategory.create({
+              productId: product.id,
+              categoryId: categoryId,
+            });
+
+            console.log(createdProductCategory);
+            product_category.push(categoryId);
+          } catch (error) {
+            console.error(
+              `Failed to create product category for categoryId: ${categoryId}`,
+              error
+            );
+          }
+        }
+
+        console.log(product_category);
       } catch (error) {
         const fileNames = imageFiles.map((img) => {
           return img.filename;
