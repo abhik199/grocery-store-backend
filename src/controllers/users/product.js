@@ -2,11 +2,22 @@ const {
   productModel,
   productImgModel,
   categoryModel,
+  reviews_ratingModel,
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/customErrorHandler");
 const { Op } = require("sequelize");
 const path = require("path");
 const fs = require("fs");
+const { sequelize } = require("../../../config/database");
+
+productModel.hasMany(reviews_ratingModel, {
+  foreignKey: "productId",
+  as: "review",
+});
+reviews_ratingModel.belongsTo(productModel, {
+  foreignKey: "productId",
+  as: "review",
+});
 
 exports.getProduct = async (req, res, next) => {
   try {
@@ -14,7 +25,7 @@ exports.getProduct = async (req, res, next) => {
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
-    const { name, category, minPrice, maxPrice } = req.query;
+    const { name, category, minPrice, maxPrice, brand } = req.query;
 
     const whereCondition = {};
 
@@ -23,7 +34,10 @@ exports.getProduct = async (req, res, next) => {
     }
 
     if (category) {
-      whereCondition["$category.name$"] = { [Op.like]: `%${category}%` };
+      whereCondition["$categories.name$"] = { [Op.like]: `%${category}%` };
+    }
+    if (brand) {
+      whereCondition.brand = { [Op.like]: `%${brand}%` };
     }
 
     if (minPrice && maxPrice) {
@@ -44,11 +58,23 @@ exports.getProduct = async (req, res, next) => {
           "description",
           "discount_percentage",
         ],
+        include: [
+          [
+            sequelize.literal(
+              "(SELECT AVG(rating) FROM reviews_and_ratings WHERE reviews_and_ratings.productId = product.id)"
+            ),
+            "rating",
+          ],
+        ],
       },
       include: [
         {
           model: categoryModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+          as: "categories",
+          through: { attributes: [] },
         },
       ],
       offset: offset,
@@ -94,9 +120,29 @@ exports.getSingleProduct = async (req, res, next) => {
       },
       where: { id: id },
       include: [
+        [
+          sequelize.literal(
+            "(SELECT AVG(rating) FROM reviews_and_ratings WHERE reviews_and_ratings.productId = product.id)"
+          ),
+          "rating",
+        ],
+      ],
+
+      include: [
+        {
+          model: reviews_ratingModel, // Change the model name to "reviews_ratingModel"
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+          as: "review", // Use the original alias "reviews_and_ratings"
+        },
         {
           model: categoryModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+          as: "categories", // Specify the alias used for the category association
+          through: { attributes: [] }, // Exclude the join table attributes
         },
         {
           model: productImgModel,
@@ -109,7 +155,7 @@ exports.getSingleProduct = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "product not found" });
     }
-    return res.status(200).json({ status: false, product });
+    return res.status(200).json({ status: true, product });
   } catch (error) {
     return next(error);
   }

@@ -3,7 +3,7 @@ const { sequelize } = require("../../../config/database");
 const product = require("./product");
 const category = require("./category");
 
-const product_category = sequelize.define(
+const productCategory = sequelize.define(
   "product_category",
   {
     productId: {
@@ -26,6 +26,15 @@ const product_category = sequelize.define(
   { timestamps: false }
 );
 
-product_category.sync();
+productCategory.sync();
 
-module.exports = category;
+product.belongsToMany(category, {
+  through: productCategory,
+  foreignKey: "productId",
+});
+category.belongsToMany(product, {
+  through: productCategory,
+  foreignKey: "categoryId",
+});
+
+module.exports = productCategory;

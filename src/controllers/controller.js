@@ -8,3 +8,4 @@ exports.userProduct = require("./users/product");
 exports.userOrder = require("./users/order");
 exports.userCard = require("./users/card");
 exports.userCategory = require("./users/category");
+exports.userReviewsOnProduct = require("./users/reviews_rating");

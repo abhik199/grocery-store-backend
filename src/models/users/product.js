@@ -9,14 +9,6 @@ const product = sequelize.define("product", {
     autoIncrement: true,
     primaryKey: true,
   },
-  categoryId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: category,
-      key: "id",
-    },
-  },
   name: {
     type: DataTypes.STRING,
   },
@@ -47,18 +39,9 @@ const product = sequelize.define("product", {
   },
 });
 
-product.sync({ alter: true });
-category.hasMany(product, {
-  foreignKey: "categoryId",
-});
-product.belongsTo(category, {
-  through: "ProductCategory",
-  foreignKey: "categoryId",
-});
-
-product.belongsToMany(category, {
-  through: "product_category",
-  foreignKey: "productId",
-});
+product.sync();
+// category.hasMany(product, {
+//   foreignKey: "categoryId",
+// });
 
 module.exports = product;

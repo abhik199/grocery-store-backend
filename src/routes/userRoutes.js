@@ -6,6 +6,7 @@ const {
   userCategory,
   userProduct,
   userCard,
+  userReviewsOnProduct,
 } = require("../controllers/controller");
 
 // user  category
@@ -21,5 +22,8 @@ routes.post("/card", auth, userCard.addToCart);
 routes.patch("/card/:id", auth, userCard.updateCart);
 routes.delete("/card/:id", auth, userCard.deleteFromCart);
 routes.get("/card", auth, userCard.fetchCartByUser);
+
+// reviews and rating
+routes.post("/reviews", auth, userReviewsOnProduct.createProductReviews);
 
 module.exports = routes;

@@ -10,7 +10,8 @@ exports.categoryModel = require("./users/category");
 exports.productModel = require("./users/product");
 exports.productImgModel = require("./users/productImage");
 exports.orderModel = require("./users/order");
-exports.productCategory = require("./users/product_category");
+exports.productCategory = require("./users/productCategory");
+exports.reviews_ratingModel = require("./users/reviews_and_rating");
 
 // vender Models
 //

@@ -1,3 +1,7 @@
+const { Op } = require("sequelize");
+const path = require("path");
+const fs = require("fs");
+
 const {
   productModel,
   productImgModel,
@@ -5,9 +9,6 @@ const {
   productCategory,
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/customErrorHandler");
-const { Op, where } = require("sequelize");
-const path = require("path");
-const fs = require("fs");
 
 exports.createProducts = async (req, res, next) => {
   const { name, price, brand, discount_price, categoryId, tag, stock } =
@@ -57,30 +58,21 @@ exports.createProducts = async (req, res, next) => {
           { where: { id: product.id }, returning: true }
         );
         // add multiple category  in category modules
-        const category = [categoryId]; // Assuming you have an array of category IDs
+        const categoryIds = req.body.categoryId.split(","); // Split the string into an array of category IDs
+        const category_Id = [];
 
-        const product_category = []; // Initialize an empty array outside the loop
+        for (let i = 0; i < categoryIds.length; i++) {
+          const categoryId = parseInt(categoryIds[i], 10); // Convert each ID to an integer
+          const imagePath = categoryId;
 
-        for (let i = 0; i < category.length; i++) {
-          const categoryId = category[i];
+          await productCategory.create({
+            productId: product.id,
+            categoryId: categoryId,
+          });
 
-          try {
-            const createdProductCategory = await productCategory.create({
-              productId: product.id,
-              categoryId: categoryId,
-            });
-
-            console.log(createdProductCategory);
-            product_category.push(categoryId);
-          } catch (error) {
-            console.error(
-              `Failed to create product category for categoryId: ${categoryId}`,
-              error
-            );
-          }
+          console.log(imagePath);
+          category_Id.push(imagePath);
         }
-
-        console.log(product_category);
       } catch (error) {
         const fileNames = imageFiles.map((img) => {
           return img.filename;
@@ -120,7 +112,7 @@ exports.fetchAllProducts = async (req, res, next) => {
       whereCondition.name = { [Op.like]: `%${name}%` };
     }
 
-    const { count, rows: products } = await productModel.findAndCountAll({
+    const products = await productModel.findAll({
       where: whereCondition,
       attributes: {
         exclude: ["createdAt", "updatedAt"],
@@ -128,7 +120,9 @@ exports.fetchAllProducts = async (req, res, next) => {
       include: [
         {
           model: categoryModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
+          attributes: {
+            exclude: ["createdAt", "updatedAt", "product_category"],
+          },
         },
       ],
       offset: offset,
@@ -137,7 +131,7 @@ exports.fetchAllProducts = async (req, res, next) => {
 
     const totalCount = await productModel.count();
 
-    if (count === 0) {
+    if (products === 0) {
       return res.status(404).json({
         status: false,
         message: "Product not found",
