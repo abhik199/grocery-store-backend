@@ -33,9 +33,9 @@ exports.getProduct = async (req, res, next) => {
       whereCondition.name = { [Op.like]: `%${name}%` };
     }
 
-    if (category) {
-      whereCondition["$categories.name$"] = { [Op.like]: `%${category}%` };
-    }
+    // if (category) {
+    //   whereCondition["$categories.name$"] = { [Op.like]: `%${category}%` };
+    // }
     if (brand) {
       whereCondition.brand = { [Op.like]: `%${brand}%` };
     }
@@ -67,16 +67,16 @@ exports.getProduct = async (req, res, next) => {
           ],
         ],
       },
-      include: [
-        {
-          model: categoryModel,
-          attributes: {
-            exclude: ["createdAt", "updatedAt"],
-          },
-          as: "categories",
-          through: { attributes: [] },
-        },
-      ],
+      // include: [
+      //   {
+      //     model: categoryModel,
+      //     attributes: {
+      //       exclude: ["createdAt", "updatedAt"],
+      //     },
+      //     as: "categories",
+      //     through: { attributes: [] },
+      //   },
+      // ],
       offset: offset,
       limit: limit,
     });
@@ -136,14 +136,14 @@ exports.getSingleProduct = async (req, res, next) => {
           },
           as: "review", // Use the original alias "reviews_and_ratings"
         },
-        {
-          model: categoryModel,
-          attributes: {
-            exclude: ["createdAt", "updatedAt"],
-          },
-          as: "categories", // Specify the alias used for the category association
-          through: { attributes: [] }, // Exclude the join table attributes
-        },
+        // {
+        //   model: categoryModel,
+        //   attributes: {
+        //     exclude: ["createdAt", "updatedAt"],
+        //   },
+        //   as: "categories", // Specify the alias used for the category association
+        //   through: { attributes: [] }, // Exclude the join table attributes
+        // },
         {
           model: productImgModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },

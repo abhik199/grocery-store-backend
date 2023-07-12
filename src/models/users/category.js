@@ -1,6 +1,5 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../config/database");
-const Product = require("./product");
 
 const Category = sequelize.define("category", {
   id: {
@@ -15,8 +14,11 @@ const Category = sequelize.define("category", {
   category_images: {
     type: DataTypes.STRING,
   },
+  // items: {
+  //   type: DataTypes.INTEGER,
+  // },
 });
 
-Category.sync({ alter: false });
+Category.sync({ alter: true });
 
 module.exports = Category;

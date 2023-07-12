@@ -7,11 +7,16 @@ const {
   userProduct,
   userCard,
   userReviewsOnProduct,
+  userSubCategory,
 } = require("../controllers/controller");
 
 // user  category
 routes.get("/category", userCategory.getCategory);
 routes.get("/category/:id", userCategory.getProductByCategory);
+
+// user sub_category
+routes.get("/subcategoryAll/:id", userSubCategory.fetchAllSubCategory);
+// routes.get("/subcategory/:id",userSubCategory);
 
 // user product
 routes.get("/product", userProduct.getProduct);

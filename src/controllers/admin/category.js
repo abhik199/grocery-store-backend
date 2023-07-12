@@ -76,21 +76,19 @@ exports.updateCategory = async (req, res, next) => {
       { where: { id: id }, returning: true }
     );
     if (req.file !== undefined) {
-      const image_url = `${req.file.filename}`;
       try {
-        console.log(req.file.filename);
-        const a = await categoryModel.update(
+        const category_image = await categoryModel.update(
           {
             category_images: req.file.filename,
           },
-          {
-            where: {
-              id: update_category.id,
-            },
-            returning: true,
-          }
+          { where: { id: id }, returning: true }
         );
-        console.log(a);
+        if (!category_image) {
+          return res
+            .status(400)
+            .json({ status: false, message: "Update failed" });
+        }
+
         res.status(200).json({ status: true, message: "Update successfully" });
       } catch (error) {
         const folderPath = path.join(process.cwd(), "public/category");

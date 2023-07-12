@@ -12,11 +12,10 @@ const RefreshToken = sequelize.define("refresh_token", {
   token: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
   },
   userId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+
     references: {
       model: user,
       key: "id",
