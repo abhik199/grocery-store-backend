@@ -1,11 +1,12 @@
+const path = require("path");
+const fs = require("fs");
+const joi = require("joi");
+const formidable = require("formidable");
 const {
   subcategoryModel,
   categoryModel,
   categorySUbCategoryModels,
 } = require("../../models/models");
-const path = require("path");
-const fs = require("fs");
-const joi = require("joi");
 
 exports.createSubcategory = async (req, res, next) => {
   const subcategorySchema = joi.object({

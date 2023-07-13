@@ -6,6 +6,7 @@ const {
   productModel,
   productImgModel,
   subcategoryModel,
+  reviews_ratingModel,
 } = require("../../models/models");
 
 exports.getCategory = async (req, res, next) => {
@@ -91,9 +92,20 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
         {
           model: productModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },
+          include: [
+            {
+              model: subcategoryModel,
+              attributes: { exclude: ["createdAt", "updatedAt"] },
+            },
+          ],
         },
         {
           model: subcategoryModel,
+          attributes: { exclude: ["createdAt", "updatedAt"] },
+        },
+        // reviews and rating not working
+        {
+          model: reviews_ratingModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },
         },
       ],

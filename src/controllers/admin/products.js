@@ -13,6 +13,7 @@ const customErrorHandler = require("../../../config/customErrorHandler");
 const joi = require("joi");
 
 exports.createProducts = async (req, res, next) => {
+  console.log(req.body);
   const productSchema = joi.object({
     name: joi.string().required(),
     price: joi.number().required(),
@@ -27,6 +28,20 @@ exports.createProducts = async (req, res, next) => {
 
   const { error } = productSchema.validate(req.body);
   if (error) {
+    const imageFiles = req.files.filename;
+    const fileNames = imageFiles.map((img) => {
+      return img;
+    });
+    const folderPath = path.join(process.cwd(), "public/product");
+    fileNames.forEach((fileName) => {
+      const filePath = path.join(folderPath, fileName);
+      fs.unlink(filePath, (error) => {
+        if (error) {
+          console.log(`Failed to delete: ${error.message}`);
+        }
+      });
+    });
+
     return next(error);
   }
   const { price, discount_price, categoryId, subcategoryId } = req.body;
@@ -50,8 +65,7 @@ exports.createProducts = async (req, res, next) => {
         });
       }
       if (req.files !== undefined && req.files.length > 0) {
-        console.log(req.files);
-        const imageFiles = req.files.filename;
+        const imageFiles = req.files;
         try {
           const productImages = [];
           for (let i = 0; i < imageFiles.length; i++) {
@@ -62,6 +76,12 @@ exports.createProducts = async (req, res, next) => {
             });
             productImages.push(imagePath);
           }
+          await productModel.update(
+            {
+              thumbnail: productImages[0],
+            },
+            { where: { id: product.id }, returning: true }
+          );
         } catch (error) {
           const fileNames = imageFiles.map((img) => {
             return img;

@@ -11,12 +11,12 @@ routes.get("/category", [auth, admin], adminCategory.getCategory);
 routes.get("/category/:id", [auth, admin], adminCategory.getSingleCategory);
 
 // sub_category 
-routes.post('/subcategory', [auth, admin], upload.single('subcategory_image'), adminSubCategory.createSubcategory);
+routes.post('/subcategory', [auth, admin], adminSubCategory.createSubcategory);
 routes.delete('/subcategory/:id', [auth, admin],adminSubCategory.deleteSubCategory);
 routes.patch('/subcategory/:id', [auth, admin], upload.single('subcategory_image'), adminSubCategory.updateSubCategory);
 
-// product
-routes.post("/product",upload.array("product_images", 5),adminProduct.createProducts);
+// product 
+routes.post('/product',[auth,admin],upload.array('product_images'),adminProduct.createProducts)
 routes.get("/product", [auth, admin], adminProduct.fetchAllProducts);
 routes.get("/product/:id", [auth, admin], adminProduct.fetchProductById);
 routes.patch("/product/:id", [auth, admin], adminProduct.updateProduct);
