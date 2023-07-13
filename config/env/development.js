@@ -5,7 +5,7 @@ module.exports = {
   password: "gljmyxpeqmmdwwew",
   JWT_SECRET: "thisismyjwtsecretisvrygood",
   REFRESH_SECRET: "thisismyrefreshtokenlogiv",
-  url: "http://192.168.1.53:6900",
+  url: "http://192.168.1.29:6900",
 
   DB_NAME: "grocery",
   DB_USERNAME: "root",

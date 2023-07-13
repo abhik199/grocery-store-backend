@@ -12,7 +12,7 @@ const {
 
 // user  category
 routes.get("/category", userCategory.getCategory);
-routes.get("/category/:id", userCategory.getProductByCategory);
+routes.get("/category/:id", userCategory.fetchAllByCategoryId);
 
 // user sub_category
 routes.get("/subcategoryAll/:id", userSubCategory.fetchAllSubCategory);

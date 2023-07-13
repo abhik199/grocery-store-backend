@@ -1,4 +1,5 @@
 const { Op } = require("sequelize");
+const joi = require("joi");
 const env = require("../../../config/env/development");
 const {
   categoryModel,
@@ -54,38 +55,59 @@ exports.getCategory = async (req, res, next) => {
 };
 
 // user
-exports.getProductByCategory = async (req, res, next) => {
-  const { id } = req.params;
-  if (!id) {
-    return res.status(400).json({ status: false, message: "id required" });
+exports.fetchAllByCategoryId = async (req, res, next) => {
+  // get sub category
+  const idSchema = joi.object({
+    id: joi.number().required(),
+  });
+  const { error } = idSchema.validate(req.params);
+  if (error) {
+    return next(error);
   }
 
   try {
-    const categoryId = await categoryModel.findOne({});
-    const category = await categoryModel.findByPk(id, {
+    // find category  valid or not
+    const categoryId = await categoryModel.findOne({
+      where: { id: req.params.id },
+    });
+    if (!categoryId) {
+      return res
+        .status(400)
+        .json({ status: false, message: "category id wrong" });
+    }
+
+    // get all product
+    const { name } = req.query;
+
+    const whereCondition = {};
+    if (name) {
+      whereCondition.name = { [Op.like]: `%${name}%` };
+    }
+
+    const getProduct = await categoryModel.findOne({
+      where: { id: req.params.id },
       attributes: { exclude: ["createdAt", "updatedAt"] },
       include: [
         {
           model: productModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },
-          include: [
-            {
-              model: productImgModel,
-              attributes: { exclude: ["createdAt", "updatedAt"] },
-            },
-          ],
+        },
+        {
+          model: subcategoryModel,
+          attributes: { exclude: ["createdAt", "updatedAt"] },
         },
       ],
     });
-
-    if (!category) {
-      return;
+    if (!getProduct) {
+      return res
+        .status(404)
+        .json({ status: false, message: "product not found" });
     }
 
     res.status(200).json({
       success: true,
       message: "Products retrieved successfully",
-      category,
+      data: getProduct,
     });
   } catch (error) {
     return next(error);

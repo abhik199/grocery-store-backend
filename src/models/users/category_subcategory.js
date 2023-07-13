@@ -1,10 +1,10 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../../config/database");
-const Product = require("./product");
 const Category = require("./category");
+const Subcategory = require("./subcategory");
 
-const productCategory = sequelize.define(
-  "product_category",
+const category_subcategory = sequelize.define(
+  "category_subcategory",
   {
     categoryId: {
       type: DataTypes.INTEGER,
@@ -13,10 +13,10 @@ const productCategory = sequelize.define(
         key: "id",
       },
     },
-    productId: {
+    subcategoryId: {
       type: DataTypes.INTEGER,
       references: {
-        model: Product,
+        model: Subcategory,
         key: "id",
       },
     },
@@ -24,14 +24,14 @@ const productCategory = sequelize.define(
   { timestamps: false }
 );
 
-Product.belongsToMany(Category, {
-  foreignKey: "productId",
-  through: productCategory,
-});
-Category.belongsToMany(Product, {
+Category.belongsToMany(Subcategory, {
   foreignKey: "categoryId",
-  through: productCategory,
+  through: category_subcategory,
+});
+Subcategory.belongsToMany(Category, {
+  foreignKey: "subcategoryId",
+  through: category_subcategory,
 });
 
-productCategory.sync({ alter: true });
-module.exports = productCategory;
+category_subcategory.sync();
+module.exports = category_subcategory;

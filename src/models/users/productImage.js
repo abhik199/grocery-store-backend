@@ -21,7 +21,7 @@ const Images = sequelize.define("product_images", {
     },
   },
 });
-Images.sync();
+Images.sync({ alter: true });
 product.hasMany(Images, {
   foreignKey: "productId",
 });

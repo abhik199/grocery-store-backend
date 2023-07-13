@@ -6,92 +6,106 @@ const {
   productModel,
   productImgModel,
   categoryModel,
-  productCategory,
+  productCategoryModels,
+  productSubCategoryModels,
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/customErrorHandler");
+const joi = require("joi");
 
 exports.createProducts = async (req, res, next) => {
-  const {
-    name,
-    price,
-    brand,
-    discount_price,
-    categoryId,
-    tag,
-    stock,
-    subcategoryId,
-  } = req.body;
+  const productSchema = joi.object({
+    name: joi.string().required(),
+    price: joi.number().required(),
+    brand: joi.string().required(),
+    discount_price: joi.number().optional().min(0),
+    categoryId: joi.number().required().min(1),
+    tag: joi.string().optional(),
+    stock: joi.number().required().max(500).min(0),
+    subcategoryId: joi.string().required().min(1).max(10),
+    description: joi.string().optional().max(250),
+  });
 
-  if (!name || !price || !discount_price || !brand || !stock || !categoryId) {
-    return next(customErrorHandler.requiredField());
+  const { error } = productSchema.validate(req.body);
+  if (error) {
+    return next(error);
   }
+  const { price, discount_price, categoryId, subcategoryId } = req.body;
 
   try {
-    const selling_price = price;
-    const discounted_price = discount_price;
+    const parsedPrice = parseFloat(price);
+    const parsedDiscountPrice = parseFloat(discount_price);
     const discounted_percentage =
-      ((selling_price - discounted_price) / selling_price) * 100;
+      ((parsedPrice - parsedDiscountPrice) / parsedPrice) * 100;
 
-    const product = await productModel.create({
-      ...req.body,
-      discount_percentage: discounted_percentage,
-    });
+    try {
+      const product = await productModel.create({
+        ...req.body,
+        discount_percentage: discounted_percentage,
+      });
 
-    if (!product) {
-      return res.status(400).json({
+      if (!product) {
+        return res.status(400).json({
+          status: false,
+          message: "Failed to create product",
+        });
+      }
+      if (req.files !== undefined && req.files.length > 0) {
+        console.log(req.files);
+        const imageFiles = req.files.filename;
+        try {
+          const productImages = [];
+          for (let i = 0; i < imageFiles.length; i++) {
+            const imagePath = `${imageFiles[i].filename}`;
+            await productImgModel.create({
+              productId: product.id,
+              images: imagePath,
+            });
+            productImages.push(imagePath);
+          }
+        } catch (error) {
+          const fileNames = imageFiles.map((img) => {
+            return img;
+          });
+          const folderPath = path.join(process.cwd(), "public/product");
+          fileNames.forEach((fileName) => {
+            const filePath = path.join(folderPath, fileName);
+            fs.unlink(filePath, (error) => {
+              if (error) {
+                console.log(`Failed to delete: ${error.message}`);
+              }
+            });
+          });
+        }
+      }
+
+      // Create product-category association
+      await productCategoryModels.create({
+        categoryId: categoryId,
+        productId: product.id,
+      });
+
+      // Create product-subcategory associations
+      const subcategories = subcategoryId.split(",");
+
+      for (let i = 0; i < subcategories.length; i++) {
+        const subcategoryId = parseInt(subcategories[i]);
+        await productSubCategoryModels.create({
+          subcategoryId: subcategoryId,
+          productId: product.id,
+        });
+      }
+
+      res.status(200).json({
+        status: true,
+        message: "Product created successfully",
+        product: product,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
         status: false,
         message: "Failed to create product",
       });
-    }
-
-    const subcategory = req.body.subcategoryId.split(",");
-    const categoryId = req.body.categoryId;
-    const productId = product.id;
-
-    for (let i = 0; i < subcategory.length; i++) {
-      const subcategoryId = parseInt(subcategory[i]);
-      await productCategory.create({
-        categoryId: categoryId,
-        productId: productId,
-        subcategoryId: subcategoryId,
-      });
-    }
-
-    if (req.files !== undefined) {
-      const imageFiles = req.files;
-
-      try {
-        const productImages = [];
-        for (let i = 0; i < imageFiles.length; i++) {
-          const imagePath = `${imageFiles[i].filename}`;
-          await productImgModel.create({
-            productId: product.id,
-            images: imagePath,
-          });
-          productImages.push(imagePath);
-        }
-
-        await product.update(
-          {
-            thumbnail: productImages[0],
-          },
-          { where: { id: product.id }, returning: true }
-        );
-        // add multiple category  in category modules
-      } catch (error) {
-        const fileNames = imageFiles.map((img) => {
-          return img.filename;
-        });
-        const folderPath = path.join(process.cwd(), "public/product");
-        fileNames.forEach((fileName) => {
-          const filePath = path.join(folderPath, fileName);
-          fs.unlink(filePath, (error) => {
-            if (error) {
-              console.log(`Failed to delete: ${error.message}`);
-            }
-          });
-        });
-      }
     }
 
     res.status(201).json({

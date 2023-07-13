@@ -1,12 +1,25 @@
-const { subcategoryModel, categoryModel } = require("../../models/models");
+const {
+  subcategoryModel,
+  categoryModel,
+  categorySUbCategoryModels,
+} = require("../../models/models");
 const path = require("path");
 const fs = require("fs");
+const joi = require("joi");
 
 exports.createSubcategory = async (req, res, next) => {
-  const { categoryId, subcategory } = req.body;
+  const subcategorySchema = joi.object({
+    categoryId: joi.number().required(),
+    subcategory: joi.string().required(),
+  });
+  const { error } = subcategorySchema.validate(req.body);
+
+  if (error) {
+    return next(error);
+  }
   const sub_category = await subcategoryModel.findAll({
     where: {
-      subcategory: subcategory,
+      subcategory: req.body.subcategory,
     },
   });
 
@@ -16,7 +29,7 @@ exports.createSubcategory = async (req, res, next) => {
       .json({ status: false, message: "sub category already exist" });
   }
   const category_id = await categoryModel.findAll({
-    where: { id: categoryId },
+    where: { id: req.body.categoryId },
   });
 
   if (category_id.length === 0) {
@@ -27,8 +40,8 @@ exports.createSubcategory = async (req, res, next) => {
 
   try {
     const add_subCategory = await subcategoryModel.create({
-      subcategory: subcategory,
-      categoryId: categoryId,
+      subcategory: req.body.subcategory,
+      categoryId: req.body.categoryId,
     });
     if (!add_subCategory || add_subCategory.length === 0) {
       res.status(400).json({
@@ -39,6 +52,10 @@ exports.createSubcategory = async (req, res, next) => {
     res.status(201).json({
       status: true,
       message: "sub category create successfully",
+    });
+    await categorySUbCategoryModels.create({
+      categoryId: req.body.categoryId,
+      subcategoryId: add_subCategory.id,
     });
 
     // Image Upload
