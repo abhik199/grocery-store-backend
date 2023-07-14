@@ -15,8 +15,8 @@ routes.get("/category", userCategory.getCategory);
 routes.get("/category/:id", userCategory.fetchAllByCategoryId);
 
 // user sub_category
-routes.get("/subcategoryAll/:id", userSubCategory.fetchAllSubCategory);
-// routes.get("/subcategory/:id",userSubCategory);
+
+routes.get("/subcategory/:id", userSubCategory.fetchProductBySubCategoryId);
 
 // user product
 routes.get("/product", userProduct.getProduct);

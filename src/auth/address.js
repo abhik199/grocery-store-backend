@@ -1,7 +1,22 @@
 const { addressesModel, userModel } = require("../models/models");
+const joi = require("joi");
 
 exports.createAddress = async (req, res, next) => {
   const { id } = req.user;
+  const addressSchema = joi.object({
+    full_name: joi.string().max(15).min(5).required(),
+    contact: joi.number().min(10).max(10).required(),
+    country: joi.string().required(),
+    state: joi.string().required(),
+    city: joi.string().required(),
+    post_code: joi.number().min(6).max(6),
+    address: joi.string().required(),
+    address_type: joi.string().required(),
+  });
+  const { error } = addressSchema.validate(req.body);
+  if (error) {
+    return next(error);
+  }
 
   try {
     const user = await userModel.findOne({ where: { id: id } });

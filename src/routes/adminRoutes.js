@@ -11,7 +11,7 @@ routes.get("/category", [auth, admin], adminCategory.getCategory);
 routes.get("/category/:id", [auth, admin], adminCategory.getSingleCategory);
 
 // sub_category 
-routes.post('/subcategory', [auth, admin], adminSubCategory.createSubcategory);
+routes.post('/subcategory', [auth, admin],upload.single('subcategory_image'), adminSubCategory.createSubcategory);
 routes.delete('/subcategory/:id', [auth, admin],adminSubCategory.deleteSubCategory);
 routes.patch('/subcategory/:id', [auth, admin], upload.single('subcategory_image'), adminSubCategory.updateSubCategory);
 

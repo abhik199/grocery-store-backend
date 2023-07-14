@@ -1,6 +1,10 @@
-const { subcategoryModel, categoryModel } = require("../../models/models");
+const {
+  subcategoryModel,
+  categoryModel,
+  productModel,
+} = require("../../models/models");
 
-exports.fetchSubCategoryById = async (req, res, next) => {
+exports.fetchProductBySubCategoryId = async (req, res, next) => {
   const id = req.params.id;
   if (!id) {
     return res
@@ -9,15 +13,27 @@ exports.fetchSubCategoryById = async (req, res, next) => {
   }
 
   try {
-    const category_id = await categoryModel.findOne({ where: { id: id } });
+    const category_id = await subcategoryModel.findOne({ where: { id: id } });
     if (category_id.length === 0) {
       return res
         .status(400)
-        .json({ status: false, message: "category not valid" });
+        .json({ status: false, message: "subcategory id not valid" });
     }
     const getSubCategory = await subcategoryModel.findAll({
-      where: { categoryId: id },
+      where: { id: id },
+      include: [
+        {
+          model: productModel,
+          attributes: { exclude: ["createdAt", "updatedAt"] },
+        },
+      ],
     });
+    if (!getSubCategory) {
+      return res
+        .status(404)
+        .json({ status: false, message: "product not found" });
+    }
+    return res.status(200).json({ getSubCategory });
   } catch (error) {
     return next(error);
   }

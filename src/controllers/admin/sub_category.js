@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const joi = require("joi");
-const formidable = require("formidable");
+
 const {
   subcategoryModel,
   categoryModel,
@@ -18,17 +18,19 @@ exports.createSubcategory = async (req, res, next) => {
   if (error) {
     return next(error);
   }
-  const sub_category = await subcategoryModel.findAll({
-    where: {
-      subcategory: req.body.subcategory,
-    },
-  });
+  //  Duplicate Sub category Id not required
 
-  if (sub_category.length !== 0) {
-    return res
-      .status(400)
-      .json({ status: false, message: "sub category already exist" });
-  }
+  // const sub_category = await subcategoryModel.findAll({
+  //   where: {
+  //     subcategory: req.body.subcategory,
+  //   },
+  // });
+
+  // if (sub_category.length !== 0) {
+  //   return res
+  //     .status(400)
+  //     .json({ status: false, message: "sub category already exist" });
+  // }
   const category_id = await categoryModel.findAll({
     where: { id: req.body.categoryId },
   });
@@ -58,6 +60,15 @@ exports.createSubcategory = async (req, res, next) => {
       categoryId: req.body.categoryId,
       subcategoryId: add_subCategory.id,
     });
+
+    const subcategoryCount = await subcategoryModel.count({
+      where: { categoryId: req.body.categoryId },
+    });
+
+    await categoryModel.update(
+      { items: subcategoryCount },
+      { where: { id: req.body.categoryId }, returning: true }
+    );
 
     // Image Upload
     if (req.file !== undefined) {

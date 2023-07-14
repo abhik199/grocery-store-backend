@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const joi = require("joi");
 const env = require("../../../config/env/development");
 const {
@@ -8,6 +8,7 @@ const {
   subcategoryModel,
   reviews_ratingModel,
 } = require("../../models/models");
+const { sequelize } = require("../../../config/database");
 
 exports.getCategory = async (req, res, next) => {
   try {
@@ -46,7 +47,7 @@ exports.getCategory = async (req, res, next) => {
       id: cat.id,
       name: cat.name,
       category_images: `${env.url}/category/${cat.category_images}`,
-      items: 10,
+      items: cat.items,
     }));
 
     return res.status(200).json({ status: true, data: modifiedCategory });
@@ -78,11 +79,57 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
     }
 
     // get all product
-    const { name } = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+    const { name, brand, category, minPrice, maxPrice, sort } = req.query;
 
     const whereCondition = {};
     if (name) {
-      whereCondition.name = { [Op.like]: `%${name}%` };
+      whereCondition.name = {
+        [Op.like]: `%${name}%`,
+      };
+    }
+    if (brand) {
+      whereCondition.brand = {
+        [Op.like]: `%${brand}`,
+      };
+    }
+    // Search by subcategory
+    if (category) {
+      whereCondition["$subcategories.subcategory$"] = {
+        [Op.like]: `%${category}%`,
+      };
+    }
+    // Filter by price
+    if (minPrice && maxPrice) {
+      whereCondition.price = {
+        [Op.between]: [minPrice, maxPrice],
+      };
+    } else if (minPrice) {
+      whereCondition.price = {
+        [Op.gte]: minPrice,
+      };
+    } else if (maxPrice) {
+      whereCondition.price = {
+        [Op.lte]: maxPrice,
+      };
+    }
+    // Filter by brand
+    if (brand) {
+      whereCondition.brand = {
+        [Op.like]: `%${brand}%`,
+      };
+    }
+    let orderBy;
+    if (sort === "low_to_high") {
+      console.log(sort);
+      orderBy = [["price", "ASC"]];
+    } else if (sort === "high_to_low") {
+      console.log(sort);
+      orderBy = [["price", "DESC"]];
+    } else {
+      orderBy = [["createdAt", "DESC"]];
     }
 
     const getProduct = await categoryModel.findOne({
@@ -97,29 +144,46 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
               model: subcategoryModel,
               attributes: { exclude: ["createdAt", "updatedAt"] },
             },
+            {
+              model: reviews_ratingModel,
+              attributes: { exclude: ["createdAt", "updatedAt"] },
+              as: "review",
+            },
           ],
-        },
-        {
-          model: subcategoryModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
-        },
-        // reviews and rating not working
-        {
-          model: reviews_ratingModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
+          where: whereCondition,
+          order: orderBy,
         },
       ],
+      offset: offset,
+      limit: limit,
     });
+
+    // Format the nested subcategories and reviews
+    const formattedProduct = getProduct.toJSON();
+    formattedProduct.products.forEach((product) => {
+      product.subcategories = product.subcategories.map((subcategory) => ({
+        id: subcategory.id,
+        subcategory: subcategory.subcategory,
+        subcategory_images: subcategory.subcategory_images,
+        categoryId: subcategory.categoryId,
+        items: subcategory.items,
+      }));
+    });
+
     if (!getProduct) {
       return res
         .status(404)
         .json({ status: false, message: "product not found" });
     }
-
+    const totalCount = await productModel.count();
+    const totalPages = Math.ceil(totalCount / limit);
     res.status(200).json({
       success: true,
       message: "Products retrieved successfully",
-      data: getProduct,
+      data: formattedProduct,
+      totalPages,
+      totalItems: totalCount,
+      currentPage: page,
     });
   } catch (error) {
     return next(error);

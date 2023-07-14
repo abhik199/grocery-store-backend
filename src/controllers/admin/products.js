@@ -25,6 +25,9 @@ exports.createProducts = async (req, res, next) => {
     subcategoryId: joi.string().required().min(1).max(10),
     description: joi.string().optional().max(250),
   });
+  // const imageSchema = joi.object({
+  //   product_images:joi.string
+  // });
 
   const { error } = productSchema.validate(req.body);
   if (error) {
@@ -64,6 +67,10 @@ exports.createProducts = async (req, res, next) => {
           message: "Failed to create product",
         });
       }
+      // items add in subcategory
+      // const productCount = await productModel.count({
+      // })
+
       if (req.files !== undefined && req.files.length > 0) {
         const imageFiles = req.files;
         try {
@@ -378,6 +385,12 @@ exports.updateImage = async (req, res, next) => {
       return res
         .status(400)
         .json({ status: false, message: "Image id required" });
+    }
+    const findId = await productImgModel.findOne({ where: { id: id } });
+    if (!findId) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Image Id not valid" });
     }
     if (req.file !== undefined) {
       const image_id = await productImgModel.findOne({ where: { id: id } });

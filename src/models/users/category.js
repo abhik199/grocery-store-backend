@@ -14,9 +14,10 @@ const Category = sequelize.define("category", {
   category_images: {
     type: DataTypes.STRING,
   },
-  // items: {
-  //   type: DataTypes.INTEGER,
-  // },
+  items: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
 });
 
 Category.sync({ alter: true });
