@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
-const { sequelize } = require("../../../config/database");
-const User = require("../auth/register");
+const { sequelize } = require("../../config/database");
+const User = require("./auth/register");
 const Product = require("./product");
 
 const ReviewsAndRating = sequelize.define("reviews_and_rating", {

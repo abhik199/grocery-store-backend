@@ -46,7 +46,7 @@ exports.getCategory = async (req, res, next) => {
     const modifiedCategory = category.map((cat) => ({
       id: cat.id,
       name: cat.name,
-      category_images: `${env.url}/category/${cat.category_images}`,
+      category_images: cat.category_images,
       items: cat.items,
     }));
 
@@ -59,6 +59,7 @@ exports.getCategory = async (req, res, next) => {
 // user
 exports.fetchAllByCategoryId = async (req, res, next) => {
   // get sub category
+  console.log(req.params.id);
   const idSchema = joi.object({
     id: joi.number().required(),
   });
@@ -82,51 +83,38 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
-    const { name, brand, category, minPrice, maxPrice, sort } = req.query;
+    const { name, brand, subcategory, minPrice, maxPrice, sort } = req.query;
 
-    const whereCondition = {};
-    if (name) {
-      whereCondition.name = {
-        [Op.like]: `%${name}%`,
-      };
+    const whereCondition = {
+      ...(name && { name: { [Op.like]: `%${name}%` } }),
+      ...(subcategory && { subcategory: { [Op.like]: `%${subcategory}%` } }),
+      ...(brand && { brand: { [Op.like]: `%${brand}%` } }),
+      ...(minPrice &&
+        maxPrice && {
+          [Op.or]: [{ price: { [Op.between]: [minPrice, maxPrice] } }],
+        }),
+      ...(minPrice &&
+        !maxPrice && {
+          [Op.or]: [{ price: { [Op.gte]: minPrice } }],
+        }),
+      ...(maxPrice &&
+        !minPrice && {
+          [Op.or]: [{ price: { [Op.lte]: maxPrice } }],
+        }),
+    };
+    let order;
+    if (sort === "low_to_high") {
+      order = [["price", "ASC"]];
+    } else if (sort === "high_to_low") {
+      order = [["price", "DESC"]];
+    } else {
+      order = [["createdAt", "DESC"]];
     }
-    if (brand) {
-      whereCondition.brand = {
-        [Op.like]: `%${brand}`,
-      };
-    }
-    // Search by subcategory
-    if (category) {
-      whereCondition["$subcategories.subcategory$"] = {
-        [Op.like]: `%${category}%`,
-      };
-    }
-    // Filter by price
-    if (minPrice && maxPrice) {
-      whereCondition.price = {
-        [Op.between]: [minPrice, maxPrice],
-      };
-    } else if (minPrice) {
-      whereCondition.price = {
-        [Op.gte]: minPrice,
-      };
-    } else if (maxPrice) {
-      whereCondition.price = {
-        [Op.lte]: maxPrice,
-      };
-    }
-    // Filter by brand
-    if (brand) {
-      whereCondition.brand = {
-        [Op.like]: `%${brand}%`,
-      };
-    }
+
     let orderBy;
     if (sort === "low_to_high") {
-      console.log(sort);
       orderBy = [["price", "ASC"]];
     } else if (sort === "high_to_low") {
-      console.log(sort);
       orderBy = [["price", "DESC"]];
     } else {
       orderBy = [["createdAt", "DESC"]];
@@ -141,6 +129,11 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
           attributes: { exclude: ["createdAt", "updatedAt"] },
           include: [
             {
+              model: productImgModel,
+              attributes: { exclude: ["createdAt", "updatedAt"] },
+            },
+
+            {
               model: subcategoryModel,
               attributes: { exclude: ["createdAt", "updatedAt"] },
             },
@@ -154,21 +147,32 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
           order: orderBy,
         },
       ],
-      offset: offset,
-      limit: limit,
     });
 
-    // Format the nested subcategories and reviews
-    const formattedProduct = getProduct.toJSON();
-    formattedProduct.products.forEach((product) => {
-      product.subcategories = product.subcategories.map((subcategory) => ({
-        id: subcategory.id,
-        subcategory: subcategory.subcategory,
-        subcategory_images: subcategory.subcategory_images,
-        categoryId: subcategory.categoryId,
-        items: subcategory.items,
-      }));
-    });
+    if (!getProduct || Object.keys(getProduct).length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Product not found" });
+    }
+
+    // This code is not using at time using fronted side
+    const formattedProduct = getProduct.products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      price: product.price,
+      discount_price: product.discount_price,
+      discount_percentage: product.discount_percentage,
+      tag: product.tag,
+      stock: product.stock,
+      thumbnail: product.thumbnail,
+      description: product.description,
+      subcategory: product.subcategories.map(
+        (subcategory) => subcategory.subcategory
+      ),
+      category: getProduct.name,
+      product_images: product.product_images.map((image) => image.images),
+    }));
 
     if (!getProduct) {
       return res
@@ -179,8 +183,7 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
     const totalPages = Math.ceil(totalCount / limit);
     res.status(200).json({
       success: true,
-      message: "Products retrieved successfully",
-      data: formattedProduct,
+      products: formattedProduct,
       totalPages,
       totalItems: totalCount,
       currentPage: page,

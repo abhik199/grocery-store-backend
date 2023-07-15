@@ -1,4 +1,5 @@
 const { cardModel, productModel, userModel } = require("../../models/models");
+const joi = require("joi");
 
 exports.fetchCartByUser = async (req, res, next) => {
   const { id } = req.user;
@@ -36,6 +37,15 @@ exports.fetchCartByUser = async (req, res, next) => {
 
 exports.addToCart = async (req, res, next) => {
   const { id: userId } = req.user;
+  const cardSchema = joi.object({
+    quantity: joi.number().required(),
+    productId: joi.number().required(),
+  });
+  const { error } = cardSchema.validate(req.body);
+  if (error) {
+    return next(error);
+  }
+
   const { productId, quantity } = req.body;
   if (!quantity) {
     return res

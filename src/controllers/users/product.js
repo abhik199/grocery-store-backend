@@ -3,6 +3,8 @@ const {
   productImgModel,
   categoryModel,
   reviews_ratingModel,
+  subcategoryModel,
+  orderModel,
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/customErrorHandler");
 const { Op } = require("sequelize");
@@ -20,36 +22,20 @@ reviews_ratingModel.belongsTo(productModel, {
 });
 
 exports.getProduct = async (req, res, next) => {
-  try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 5;
-    const offset = (page - 1) * limit;
+  // popular products
+  // const popularProducts = await orderModel.findAll({
+  //   where: { status: "Delivered" },
+  // });
+  // const productId = await productModel.findAll({
+  //   where: { id: popularProducts.id },
+  // });
 
-    const { name, category, minPrice, maxPrice, brand } = req.query;
+  try {
+    const { category } = req.query;
 
     const whereCondition = {};
 
-    if (name) {
-      whereCondition.name = { [Op.like]: `%${name}%` };
-    }
-
-    // if (category) {
-    //   whereCondition["$categories.name$"] = { [Op.like]: `%${category}%` };
-    // }
-    if (brand) {
-      whereCondition.brand = { [Op.like]: `%${brand}%` };
-    }
-
-    if (minPrice && maxPrice) {
-      whereCondition.price = { [Op.between]: [minPrice, maxPrice] };
-    } else if (minPrice) {
-      whereCondition.price = { [Op.gte]: minPrice };
-    } else if (maxPrice) {
-      whereCondition.price = { [Op.lte]: maxPrice };
-    }
-
     const { count, rows: products } = await productModel.findAndCountAll({
-      where: whereCondition,
       attributes: {
         exclude: [
           "createdAt",
@@ -58,30 +44,23 @@ exports.getProduct = async (req, res, next) => {
           "description",
           "discount_percentage",
         ],
-        include: [
-          [
-            sequelize.literal(
-              "(SELECT AVG(rating) FROM reviews_and_ratings WHERE reviews_and_ratings.productId = product.id)"
-            ),
-            "rating",
-          ],
-        ],
       },
-      // include: [
-      //   {
-      //     model: categoryModel,
-      //     attributes: {
-      //       exclude: ["createdAt", "updatedAt"],
-      //     },
-      //     as: "categories",
-      //     through: { attributes: [] },
-      //   },
-      // ],
-      offset: offset,
-      limit: limit,
+      include: [
+        {
+          model: productImgModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+        },
+        {
+          model: subcategoryModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+        },
+      ],
+      limit: 10,
     });
-
-    const totalCount = await productModel.count();
 
     if (count === 0) {
       return res.status(404).json({
@@ -89,16 +68,24 @@ exports.getProduct = async (req, res, next) => {
         message: "Product not found",
       });
     }
-
-    const totalPages = Math.ceil(totalCount / limit);
+    const modifiedProduct = products.map((product) => ({
+      id: product.id,
+      title: product.name,
+      brand: product.brand,
+      price: product.price,
+      discount_price: product.discount_price,
+      tag: product.tag,
+      subcategory: product.subcategories.map(
+        (subcategory) => subcategory.subcategory
+      ),
+      image: product.product_images
+        .map((image) => image.images) // Get all images
+        .slice(0, 2), // Take only the first 2 images
+    }));
 
     return res.status(200).json({
       status: true,
-      message: "Products retrieved successfully.",
-      data: products,
-      totalPages,
-      totalItems: totalCount,
-      currentPage: page,
+      data: modifiedProduct,
     });
   } catch (error) {
     return next(error);
@@ -115,18 +102,10 @@ exports.getSingleProduct = async (req, res, next) => {
 
   try {
     const product = await productModel.findOne({
+      where: { id: id },
       attributes: {
         exclude: ["createdAt", "updatedAt"],
       },
-      where: { id: id },
-      include: [
-        [
-          sequelize.literal(
-            "(SELECT AVG(rating) FROM reviews_and_ratings WHERE reviews_and_ratings.productId = product.id)"
-          ),
-          "rating",
-        ],
-      ],
 
       include: [
         {
@@ -158,5 +137,44 @@ exports.getSingleProduct = async (req, res, next) => {
     return res.status(200).json({ status: true, product });
   } catch (error) {
     return next(error);
+  }
+};
+
+// popular products'
+// we are using req.params.data{popular}
+// passing popular
+
+// passing trending
+
+//  popular products
+exports.fetchAllPopularProduct = async (req, res, next) => {
+  try {
+    const popular_productId = await orderModel.findAll({
+      where: { status: "Delivered" },
+    });
+    const productId = popular_productId.map((id) => id.productId);
+    const product = await productModel.findAll({
+      where: { id: productId },
+      attributes: {
+        exclude: ["createdAt", "updatedAt"],
+      },
+      include: [
+        {
+          model: subcategoryModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+        },
+        {
+          model: productImgModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+        },
+      ],
+    });
+    res.send(product);
+  } catch (error) {
+    res.send(error);
   }
 };

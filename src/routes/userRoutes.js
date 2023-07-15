@@ -31,4 +31,9 @@ routes.get("/card", auth, userCard.fetchCartByUser);
 // reviews and rating
 routes.post("/reviews", auth, userReviewsOnProduct.createProductReviews);
 
+// user order
+
+routes.post("/order", auth, userOrder.createOrder);
+routes.get("/pproducts", userProduct.fetchAllPopularProduct);
+
 module.exports = routes;

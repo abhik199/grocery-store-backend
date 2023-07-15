@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
-const { sequelize } = require("../../../config/database");
+const { sequelize } = require("../../config/database");
 const product = require("./product");
-const user = require("../auth/register");
+const user = require("./auth/register");
 
 const card = sequelize.define("card", {
   id: {

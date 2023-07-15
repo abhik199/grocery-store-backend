@@ -1,6 +1,6 @@
-const { DataTypes, or } = require("sequelize");
-const { sequelize } = require("../../../config/database");
-const user = require("../auth/register");
+const { DataTypes } = require("sequelize");
+const { sequelize } = require("../../config/database");
+const user = require("./auth/register");
 const product = require("./product");
 
 const order = sequelize.define("order", {
