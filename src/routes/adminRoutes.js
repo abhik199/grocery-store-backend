@@ -7,7 +7,7 @@ const { upload } = require("./multer");
 routes.post("/category",[auth, admin],upload.single("category_image"),adminCategory.createCategory);
 routes.patch("/category/:id",[auth, admin],upload.single("category_image"),adminCategory.updateCategory);
 routes.delete("/category/:id", [auth, admin], adminCategory.deleteCategory);
-routes.get("/category", [auth, admin], adminCategory.getCategory);
+routes.get("/category", [auth, admin,], adminCategory.getCategory);
 routes.get("/category/:id", [auth, admin], adminCategory.getSingleCategory);
 
 // sub_category 

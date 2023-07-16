@@ -22,14 +22,6 @@ reviews_ratingModel.belongsTo(productModel, {
 });
 
 exports.getProduct = async (req, res, next) => {
-  // popular products
-  // const popularProducts = await orderModel.findAll({
-  //   where: { status: "Delivered" },
-  // });
-  // const productId = await productModel.findAll({
-  //   where: { id: popularProducts.id },
-  // });
-
   try {
     const { category } = req.query;
 
@@ -78,9 +70,7 @@ exports.getProduct = async (req, res, next) => {
       subcategory: product.subcategories.map(
         (subcategory) => subcategory.subcategory
       ),
-      image: product.product_images
-        .map((image) => image.images) // Get all images
-        .slice(0, 2), // Take only the first 2 images
+      image: product.product_images.map((image) => image.images).slice(0, 2),
     }));
 
     return res.status(200).json({
@@ -140,21 +130,17 @@ exports.getSingleProduct = async (req, res, next) => {
   }
 };
 
-// popular products'
-// we are using req.params.data{popular}
-// passing popular
-
-// passing trending
-
-//  popular products
 exports.fetchAllPopularProduct = async (req, res, next) => {
+  // Product Filter by subcategory
+  const { subcategory } = req.query;
   try {
-    const popular_productId = await orderModel.findAll({
+    const popular_productIds = await orderModel.findAll({
       where: { status: "Delivered" },
     });
-    const productId = popular_productId.map((id) => id.productId);
-    const product = await productModel.findAll({
-      where: { id: productId },
+    const productIds = popular_productIds.map((order) => order.productId);
+
+    let productFilter = {
+      where: { id: productIds },
       attributes: {
         exclude: ["createdAt", "updatedAt"],
       },
@@ -164,6 +150,7 @@ exports.fetchAllPopularProduct = async (req, res, next) => {
           attributes: {
             exclude: ["createdAt", "updatedAt"],
           },
+          through: { attributes: [] }, // Exclude join table attributes
         },
         {
           model: productImgModel,
@@ -172,9 +159,75 @@ exports.fetchAllPopularProduct = async (req, res, next) => {
           },
         },
       ],
+      limit: 10,
+    };
+
+    if (subcategory) {
+      productFilter.include[0].where = { subcategory: subcategory };
+    }
+
+    const products = await productModel.findAll(productFilter);
+
+    if (!products || products.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Products not found" });
+    }
+
+    const modifiedProducts = products.map((product) => ({
+      id: product.id,
+      title: product.name,
+      brand: product.brand,
+      price: product.price,
+      discount_price: product.discount_price,
+      tag: product.tag,
+      subcategories: product.subcategories.map(
+        (subcategory) => subcategory.subcategory
+      ),
+      images: product.product_images.map((image) => image.images),
+    }));
+
+    return res.status(200).json({
+      status: true,
+      products: modifiedProducts,
     });
-    res.send(product);
   } catch (error) {
-    res.send(error);
+    return next(error);
+  }
+};
+
+exports.fetchAllBestSellsProduct = async (req, res, next) => {
+  // filter product
+  try {
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.fetchAllDealsOfDayProduct = async (req, res, next) => {
+  try {
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.fetchAllTopSellingProduct = async (req, res, next) => {
+  try {
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.fetchAllTrendingProduct = async (req, res, next) => {
+  try {
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.fetchAllRecentlyAddedProduct = async (req, res, next) => {
+  try {
+  } catch (error) {
+    return next(error);
   }
 };

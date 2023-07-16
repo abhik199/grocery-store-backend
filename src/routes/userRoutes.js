@@ -19,8 +19,11 @@ routes.get("/category/:id", userCategory.fetchAllByCategoryId);
 routes.get("/subcategory/:id", userSubCategory.fetchProductBySubCategoryId);
 
 // user product
-routes.get("/product", userProduct.getProduct);
+
+routes.get("/product", userProduct.fetchAllPopularProduct); // i am using for testing
 routes.get("/product/:id", userProduct.getSingleProduct);
+
+routes.get("/popular_product", userProduct.fetchAllPopularProduct);
 
 // card
 routes.post("/card", auth, userCard.addToCart);
@@ -34,6 +37,5 @@ routes.post("/reviews", auth, userReviewsOnProduct.createProductReviews);
 // user order
 
 routes.post("/order", auth, userOrder.createOrder);
-routes.get("/pproducts", userProduct.fetchAllPopularProduct);
 
 module.exports = routes;

@@ -58,8 +58,6 @@ exports.getCategory = async (req, res, next) => {
 
 // user
 exports.fetchAllByCategoryId = async (req, res, next) => {
-  // get sub category
-  console.log(req.params.id);
   const idSchema = joi.object({
     id: joi.number().required(),
   });
@@ -69,55 +67,36 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
   }
 
   try {
-    // find category  valid or not
     const categoryId = await categoryModel.findOne({
       where: { id: req.params.id },
     });
     if (!categoryId) {
       return res
         .status(400)
-        .json({ status: false, message: "category id wrong" });
+        .json({ status: false, message: "Category ID is incorrect" });
     }
 
-    // get all product
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
-    const { name, brand, subcategory, minPrice, maxPrice, sort } = req.query;
+
+    const { subcategory, name, brand, minPrice, maxPrice, sort } = req.query;
 
     const whereCondition = {
-      ...(name && { name: { [Op.like]: `%${name}%` } }),
       ...(subcategory && { subcategory: { [Op.like]: `%${subcategory}%` } }),
+      ...(name && { name: { [Op.like]: `%${name}%` } }),
       ...(brand && { brand: { [Op.like]: `%${brand}%` } }),
-      ...(minPrice &&
-        maxPrice && {
-          [Op.or]: [{ price: { [Op.between]: [minPrice, maxPrice] } }],
-        }),
-      ...(minPrice &&
-        !maxPrice && {
-          [Op.or]: [{ price: { [Op.gte]: minPrice } }],
-        }),
-      ...(maxPrice &&
-        !minPrice && {
-          [Op.or]: [{ price: { [Op.lte]: maxPrice } }],
-        }),
+      ...(minPrice && { price: { [Op.gte]: minPrice } }),
+      ...(maxPrice && { price: { [Op.lte]: maxPrice } }),
     };
-    let order;
-    if (sort === "low_to_high") {
-      order = [["price", "ASC"]];
-    } else if (sort === "high_to_low") {
-      order = [["price", "DESC"]];
-    } else {
-      order = [["createdAt", "DESC"]];
-    }
 
-    let orderBy;
+    const order = [];
     if (sort === "low_to_high") {
-      orderBy = [["price", "ASC"]];
+      order.push(["price", "ASC"]);
     } else if (sort === "high_to_low") {
-      orderBy = [["price", "DESC"]];
+      order.push(["price", "DESC"]);
     } else {
-      orderBy = [["createdAt", "DESC"]];
+      order.push(["createdAt", "DESC"]);
     }
 
     const getProduct = await categoryModel.findOne({
@@ -132,31 +111,30 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
               model: productImgModel,
               attributes: { exclude: ["createdAt", "updatedAt"] },
             },
-
             {
               model: subcategoryModel,
               attributes: { exclude: ["createdAt", "updatedAt"] },
             },
-            {
-              model: reviews_ratingModel,
-              attributes: { exclude: ["createdAt", "updatedAt"] },
-              as: "review",
-            },
+            // {
+            //   model: reviews_ratingModel,
+            //   attributes: { exclude: ["createdAt", "updatedAt"] },
+            //   as: "review",
+            // },
           ],
           where: whereCondition,
-          order: orderBy,
+          order,
+          limit,
         },
       ],
     });
 
-    if (!getProduct || Object.keys(getProduct).length === 0) {
+    if (!getProduct || getProduct.products.length === 0) {
       return res
         .status(404)
-        .json({ status: false, message: "Product not found" });
+        .json({ status: false, message: "Products not found" });
     }
 
-    // This code is not using at time using fronted side
-    const formattedProduct = getProduct.products.map((product) => ({
+    const formattedProducts = getProduct.products.map((product) => ({
       id: product.id,
       name: product.name,
       brand: product.brand,
@@ -174,16 +152,12 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
       product_images: product.product_images.map((image) => image.images),
     }));
 
-    if (!getProduct) {
-      return res
-        .status(404)
-        .json({ status: false, message: "product not found" });
-    }
-    const totalCount = await productModel.count();
+    const totalCount = await productModel.count({ where: whereCondition });
     const totalPages = Math.ceil(totalCount / limit);
+
     res.status(200).json({
       success: true,
-      products: formattedProduct,
+      products: formattedProducts,
       totalPages,
       totalItems: totalCount,
       currentPage: page,
