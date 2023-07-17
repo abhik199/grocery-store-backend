@@ -32,6 +32,12 @@ Category.belongsToMany(Product, {
   foreignKey: "categoryId",
   through: productCategory,
 });
+// Product.hasMany(Category, {
+//   foreignKey: "productId",
+// });
+// Category.belongsTo(Product, {
+//   foreignKey: "categoryId",
+// });
 
 productCategory.sync({ alter: true });
 module.exports = productCategory;

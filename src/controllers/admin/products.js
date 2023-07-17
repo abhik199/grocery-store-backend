@@ -25,10 +25,6 @@ exports.createProducts = async (req, res, next) => {
     subcategoryId: joi.string().required().min(1).max(10),
     description: joi.string().optional().max(250),
   });
-  // const imageSchema = joi.object({
-  //   product_images:joi.string
-  // });
-
   const { error } = productSchema.validate(req.body);
   if (error) {
     const imageFiles = req.files.filename;

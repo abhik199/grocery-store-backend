@@ -38,4 +38,7 @@ routes.post("/reviews", auth, userReviewsOnProduct.createProductReviews);
 
 routes.post("/order", auth, userOrder.createOrder);
 
+// testing routes
+routes.get("/test/:id", userCategory.fetchAllProductByCategoryId);
+
 module.exports = routes;

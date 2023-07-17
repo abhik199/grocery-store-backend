@@ -119,7 +119,7 @@ exports.getSingleProduct = async (req, res, next) => {
         },
       ],
     });
-    if (!product) {
+    if (!product && product === 0) {
       return res
         .status(400)
         .json({ status: false, message: "product not found" });
@@ -184,7 +184,7 @@ exports.fetchAllPopularProduct = async (req, res, next) => {
       subcategories: product.subcategories.map(
         (subcategory) => subcategory.subcategory
       ),
-      images: product.product_images.map((image) => image.images),
+      images: product.product_images.map((image) => image.images).slice(0, 2),
     }));
 
     return res.status(200).json({

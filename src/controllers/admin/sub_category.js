@@ -18,27 +18,23 @@ exports.createSubcategory = async (req, res, next) => {
   if (error) {
     return next(error);
   }
-  //  Duplicate Sub category Id not required
+  const sub_category = await subcategoryModel.findAll({
+    where: {
+      subcategory: req.body.subcategory,
+    },
+  });
 
-  // const sub_category = await subcategoryModel.findAll({
-  //   where: {
-  //     subcategory: req.body.subcategory,
-  //   },
-  // });
-
-  // if (sub_category.length !== 0) {
-  //   return res
-  //     .status(400)
-  //     .json({ status: false, message: "sub category already exist" });
-  // }
+  if (sub_category.length !== 0) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Duplicate subcategory is not allowed" });
+  }
   const category_id = await categoryModel.findAll({
     where: { id: req.body.categoryId },
   });
 
   if (category_id.length === 0) {
-    return res
-      .status(400)
-      .json({ status: false, message: "category not valid" });
+    return res.status(400).json({ status: false, message: "Invalid category" });
   }
 
   try {
