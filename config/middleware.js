@@ -4,31 +4,31 @@ const env = require("./env/development");
 
 const auth = async (req, res, next) => {
   try {
-    // get token in authHeader
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      res.status(401).json({ message: "unauthorized" });
+      return res.status(401).json({ message: "Unauthorized" });
     }
+
     const token = authHeader.split(" ")[1];
 
     try {
-      const { id, email, roles } = await jwt.verify(token, env.JWT_SECRET);
+      const decodedToken = jwt.verify(token, env.JWT_SECRET);
+      const { id, email, roles } = decodedToken;
 
       const user = {
         id,
         email,
         roles,
       };
+
       req.user = user;
       next();
     } catch (error) {
-      console.log(error);
-      res.status(401).json({ message: "unauthorized" });
+      return res.status(401).json({ message: "Unauthorized" });
     }
   } catch (error) {
-    console.log(error);
-    next(error);
+    return next(error);
   }
 };
 

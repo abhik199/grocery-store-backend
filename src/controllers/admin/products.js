@@ -8,12 +8,13 @@ const {
   categoryModel,
   productCategoryModels,
   productSubCategoryModels,
+  subcategoryModel,
+  categorySUbCategoryModels,
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/customErrorHandler");
 const joi = require("joi");
 
 exports.createProducts = async (req, res, next) => {
-  console.log(req.body);
   const productSchema = joi.object({
     name: joi.string().required(),
     price: joi.number().required(),
@@ -27,30 +28,65 @@ exports.createProducts = async (req, res, next) => {
   });
   const { error } = productSchema.validate(req.body);
   if (error) {
-    const imageFiles = req.files.filename;
-    const fileNames = imageFiles.map((img) => {
-      return img;
-    });
-    const folderPath = path.join(process.cwd(), "public/product");
-    fileNames.forEach((fileName) => {
-      const filePath = path.join(folderPath, fileName);
-      fs.unlink(filePath, (error) => {
-        if (error) {
-          console.log(`Failed to delete: ${error.message}`);
-        }
-      });
-    });
+    // const imageFiles = req.files.filename;
+    // const fileNames = imageFiles.map((img) => {
+    //   return img;
+    // });
+    // const folderPath = path.join(process.cwd(), "public/product");
+    // fileNames.forEach((fileName) => {
+    //   const filePath = path.join(folderPath, fileName);
+    //   fs.unlink(filePath, (error) => {
+    //     if (error) {
+    //       console.log(`Failed to delete: ${error.message}`);
+    //     }
+    //   });
+    // });
 
     return next(error);
   }
   const { price, discount_price, categoryId, subcategoryId } = req.body;
 
   try {
+    const checkCategoryId = await categoryModel.findOne({
+      where: { id: categoryId },
+    });
+
+    if (!checkCategoryId) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Category not found" });
+    }
+    // const subcategories = subcategoryId.split(",");
+    // const subcategoryIds = [subcategories];
+    const subcategoryIds = subcategoryId.split(",");
+
+    const checkSubcategories = await subcategoryModel.findAll({
+      where: { id: subcategoryIds },
+    });
+
+    if (checkSubcategories.length !== subcategoryIds.length) {
+      return res.status(400).json({
+        status: false,
+        message: "One or more subcategories not found",
+      });
+    }
+
+    const isLinked = await categorySUbCategoryModels.findAll({
+      where: { categoryId, subcategoryId: subcategoryIds },
+    });
+
+    if (isLinked.length !== subcategoryIds.length) {
+      return res.status(400).json({
+        status: false,
+        message: "One or more subcategories are not linked to the category",
+      });
+    }
     const parsedPrice = parseFloat(price);
     const parsedDiscountPrice = parseFloat(discount_price);
     const discounted_percentage =
       ((parsedPrice - parsedDiscountPrice) / parsedPrice) * 100;
-
+    // check category Id
+    // all subcategory linked or not category
     try {
       const product = await productModel.create({
         ...req.body,
@@ -63,9 +99,6 @@ exports.createProducts = async (req, res, next) => {
           message: "Failed to create product",
         });
       }
-      // items add in subcategory
-      // const productCount = await productModel.count({
-      // })
 
       if (req.files !== undefined && req.files.length > 0) {
         const imageFiles = req.files;
@@ -109,6 +142,7 @@ exports.createProducts = async (req, res, next) => {
 
       // Create product-subcategory associations
       const subcategories = subcategoryId.split(",");
+      console.log(subcategories);
 
       for (let i = 0; i < subcategories.length; i++) {
         const subcategoryId = parseInt(subcategories[i]);
@@ -161,7 +195,19 @@ exports.fetchAllProducts = async (req, res, next) => {
       },
       include: [
         {
+          model: productImgModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt", "product_category"],
+          },
+        },
+        {
           model: categoryModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt", "product_category"],
+          },
+        },
+        {
+          model: subcategoryModel,
           attributes: {
             exclude: ["createdAt", "updatedAt", "product_category"],
           },
@@ -179,13 +225,37 @@ exports.fetchAllProducts = async (req, res, next) => {
         message: "Product not found",
       });
     }
+    const modifiedProduct = products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      price: product.price,
+      discount_price: product.discount_price,
+      discount_percentage: product.discounted_percentage,
+      tag: product.tag,
+      stock: product.stock,
+      thumbnail: product.thumbnail,
+      description: product.description,
+      categories: product.categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+      })),
+      subcategories: product.subcategories.map((subcategory) => ({
+        id: subcategory.id,
+        subcategory: subcategory.subcategory,
+      })),
+      product_images: product.product_images.map((images) => ({
+        id: images.id,
+        images: images.images,
+      })),
+    }));
 
     const totalPages = Math.ceil(totalCount / limit);
 
     return res.status(200).json({
       status: true,
       message: "Products retrieved successfully.",
-      data: products,
+      data: modifiedProduct,
       totalPages,
       totalItems: totalCount,
       currentPage: page,
@@ -211,25 +281,55 @@ exports.fetchProductById = async (req, res, next) => {
       where: { id: id },
       include: [
         {
+          model: productImgModel,
+          attributes: { exclude: ["createdAt", "updatedAt"] },
+        },
+        {
           model: categoryModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },
         },
         {
-          model: productImgModel,
+          model: subcategoryModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },
         },
       ],
     });
-    if (!product) {
+    if (!product && product.length === 0) {
       return res
         .status(400)
         .json({ status: false, message: "product not found" });
     }
-    return res.status(200).json({ status: false, product });
+    const modifiedProduct = {
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      price: product.price,
+      discount_price: product.discount_price,
+      discount_percentage: product.discount_percentage,
+      tag: product.tag,
+      stock: product.stock,
+      thumbnail: product.thumbnail,
+      description: product.description,
+      categories: product.categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+      })),
+      subcategories: product.subcategories.map((subcategory) => ({
+        id: subcategory.id,
+        subcategory: subcategory.subcategory,
+      })),
+      product_images: product.product_images.map((image) => ({
+        id: image.id,
+        images: image.images,
+      })),
+    };
+    return res.status(200).json({ status: true, product: modifiedProduct });
   } catch (error) {
     return next(error);
   }
 };
+
+// delete product it working
 
 exports.deleteProduct = async (req, res, next) => {
   const id = req.params.id;
@@ -244,15 +344,20 @@ exports.deleteProduct = async (req, res, next) => {
     if (!productId) {
       return res
         .status(400)
-        .json({ status: false, message: "Product id wrong" });
+        .json({ status: false, message: "Product not found" });
     }
+    // product images delete
     const findImg = await productImgModel.findAll({
       where: { productId: productId.id },
       attributes: {
         exclude: ["createdAt", "updatedAt"],
       },
     });
-    // return res.send(findImg);
+    // remove Associations between category and subcategory or subcategory and category
+    await productCategoryModels.destroy({
+      where: { productId: id },
+    });
+    await productSubCategoryModels.destroy({ where: { productId: id } });
     if (findImg.length === 0 && String(productId.id)) {
       const delete_img = await productModel.destroy({ where: { id: id } });
       if (!delete_img) {
@@ -279,7 +384,7 @@ exports.deleteProduct = async (req, res, next) => {
     });
     // delete image in database
     await productImgModel.destroy({ where: { productId: id } });
-    // delete all product
+    // delete  product
     const delete_product = await productModel.destroy({ where: { id: id } });
 
     if (!delete_product) {
@@ -302,29 +407,76 @@ exports.updateProduct = async (req, res, next) => {
       .status(400)
       .json({ status: false, message: "product id required" });
   }
-  const [count, updatedRows] = await productModel.update(
-    { ...req.body },
-    { where: { id: id }, returning: true }
-  );
-
-  if (count === 0) {
-    return res.status(400).json({ status: false, message: "Update failed" });
+  const { price, discount_price, categoryId, subcategoryId } = req.body;
+  if (!categoryId || !subcategoryId) {
+    return res.status(400).json({
+      status: false,
+      message: "category and subcategory Id required field ",
+    });
   }
   try {
+    const checkCategoryId = await categoryModel.findOne({
+      where: { id: categoryId },
+    });
+
+    if (!checkCategoryId) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Category not found" });
+    }
+    // const subcategories = subcategoryId.split(",");
+    // const subcategoryIds = [subcategories];
+    const subcategoryIds = subcategoryId.split(",");
+
+    const checkSubcategories = await subcategoryModel.findAll({
+      where: { id: subcategoryIds },
+    });
+
+    if (checkSubcategories.length !== subcategoryIds.length) {
+      return res.status(400).json({
+        status: false,
+        message: "One or more subcategories not found",
+      });
+    }
+
+    const isLinked = await categorySUbCategoryModels.findAll({
+      where: { categoryId, subcategoryId: subcategoryIds },
+    });
+
+    if (isLinked.length !== subcategoryIds.length) {
+      return res.status(400).json({
+        status: false,
+        message: "One or more subcategories are not linked to the category",
+      });
+    }
+    const parsedPrice = parseFloat(price);
+    const parsedDiscountPrice = parseFloat(discount_price);
+    const discounted_percentage =
+      ((parsedPrice - parsedDiscountPrice) / parsedPrice) * 100;
+
+    const [count, updatedRows] = await productModel.update(
+      { ...req.body, discount_percentage: discounted_percentage },
+      { where: { id: id }, returning: true }
+    );
+
+    if (count === 0) {
+      return res.status(400).json({ status: false, message: "Update failed" });
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: "Update successfully" });
   } catch (error) {
     return next(error);
   }
 };
 
-// Image Section
+// delete product
 // as single image delete and multiple image delete
 
 exports.deleteImage = async (req, res, next) => {
   const ids = req.params.ids;
   if (!ids) {
-    return res
-      .status(400)
-      .json({ status: false, message: "image id required" });
+    return res.status(400).json({ status: false, message: "Id required" });
   }
   const imageIds = ids.split("-");
   try {

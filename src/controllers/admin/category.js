@@ -208,6 +208,154 @@ exports.fetchCategoryById = async (req, res, next) => {
 // image Delete , subcategory, products , all images delete
 
 exports.deleteCategory = async (req, res, next) => {
+  if (!req.params.id) {
+    return res
+      .status(400)
+      .json({ status: false, message: "category id required" });
+  }
+
+  try {
+    const categoryId = await categoryModel.findOne({
+      where: { id: req.params.id },
+    });
+    if (!categoryId) {
+      return res.status(400).json({ status: false, message: "Id not valid" });
+    }
+    // const product = await categoryModel.findOne({
+    //   where: { id: req.params.id },
+    //   attributes: {
+    //     exclude: ["createdAt", "updatedAt"],
+    //   },
+    //   include: [
+    //     {
+    //       model: productModel,
+    //       attributes: {
+    //         exclude: ["createdAt", "updatedAt"],
+    //       },
+    //       include: [
+    //         {
+    //           model: productImgModel,
+    //           attributes: {
+    //             exclude: ["createdAt", "updatedAt"],
+    //           },
+    //         },
+    //       ],
+    //     },
+    //     {
+    //       model: subcategoryModel,
+    //       attributes: {
+    //         exclude: ["createdAt", "updatedAt"],
+    //       },
+    //     },
+    //   ],
+    // });
+
+    // const modifiedData = {
+    //   category: product.name,
+    //   id: product.id,
+    //   category_images: product.category_images,
+    //   products: product.products.flatMap((product) => product.id),
+    //   subcategories: product.subcategories.map((subcategory) => ({
+    //     id: subcategory.id,
+    //     subcategory_images: subcategory.subcategory_images,
+    //   })),
+    //   images: product.products.flatMap((product) =>
+    //     product.product_images.map((image) => image.images)
+    //   ),
+    // };
+
+    // try {
+    //   // delete product image
+    //   const productImages = modifiedData.images.map((data) => {
+    //     return data;
+    //   });
+
+    //   const fileNames = productImages.map((imageUrl) => {
+    //     return imageUrl;
+    //   });
+    //   const folderPath = path.join(process.cwd(), "public/product"); // Adjust
+
+    //   fileNames.forEach((fileName) => {
+    //     const filePath = path.join(folderPath, fileName);
+
+    //     fs.unlink(filePath, (error) => {
+    //       if (error) {
+    //         console.log(`Failed to delete ${fileName}: ${error.message}`);
+    //       }
+    //     });
+    //   });
+
+    //   const productIds = modifiedData.products.map((product) => product.id);
+
+    //   for (let i = 0; i < productIds.length; i++) {
+    //     const productId = productIds[i];
+    //     await productModel.destroy({ where: { id: productId } });
+    //   }
+    // } catch (error) {
+    //   console.log(error);
+    // }
+
+    // try {
+    //   // delete multiple sub category images
+    //   const subcategoryImages = await modifiedData.subcategories.map((date) => {
+    //     return date.subcategory_images;
+    //   });
+
+    //   const fileNames = subcategoryImages.map((imageUrl) => {
+    //     return imageUrl;
+    //   });
+    //   const folderPath = path.join(process.cwd(), "public/subcategory"); // Adjust
+
+    //   fileNames.forEach((fileName) => {
+    //     const filePath = path.join(folderPath, fileName);
+
+    //     fs.unlink(filePath, (error) => {
+    //       if (error) {
+    //         console.log(`Failed to delete ${fileName}: ${error.message}`);
+    //       }
+    //     });
+    //   });
+    //   const subcategoryIds = await modifiedData.subcategories.map((data) => {
+    //     return data.id;
+    //   });
+    //   for (let i = 0; i < subcategoryIds.length; i++) {
+    //     const productId = subcategoryIds[i];
+    //     const a = await subcategoryModel.destroy({
+    //       where: { id: subcategoryIds },
+    //     });
+    //     console.log(a);
+    //   }
+    // } catch (error) {
+    //   console.log(error);
+    // }
+    // try {
+    //   // delete category
+    //   const folderPath = path.join(process.cwd(), "public/category");
+    //   const filePath = path.join(folderPath, categoryId.category_images);
+    //   fs.unlink(filePath, (error) => {
+    //     if (error) {
+    //       console.log(`Failed to delete: ${error.message}`);
+    //     }
+    //   });
+    // } catch (error) {}
+
+    const category = await categoryModel.destroy({
+      where: { id: categoryId.id },
+    });
+    if (!category) {
+      return res.status(400).json({ status: false, message: "Delete failed" });
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: "Delete successfully" });
+    res.send(modifiedData);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// test category
+exports.deleteTestCategory = async (req, res, next) => {
   const categorySchema = joi.object({
     id: joi.number().required(),
   });
@@ -291,67 +439,65 @@ exports.deleteCategory = async (req, res, next) => {
 
       for (let i = 0; i < productIds.length; i++) {
         const productId = productIds[i];
-        // const a = await productModel.destroy({ where: { id: productId } });
-        // console.log(a);
-        console.log(productId);
+        await productModel.destroy({ where: { id: productId } });
       }
     } catch (error) {
       console.log(error);
     }
 
-    // try {
-    //   // delete multiple sub category images
-    //   const subcategoryImages = await modifiedData.subcategories.map((date) => {
-    //     return date.subcategory_images;
-    //   });
+    try {
+      // delete multiple sub category images
+      const subcategoryImages = await modifiedData.subcategories.map((date) => {
+        return date.subcategory_images;
+      });
 
-    //   const fileNames = subcategoryImages.map((imageUrl) => {
-    //     return imageUrl;
-    //   });
-    //   const folderPath = path.join(process.cwd(), "public/subcategory"); // Adjust
+      const fileNames = subcategoryImages.map((imageUrl) => {
+        return imageUrl;
+      });
+      const folderPath = path.join(process.cwd(), "public/subcategory"); // Adjust
 
-    //   fileNames.forEach((fileName) => {
-    //     const filePath = path.join(folderPath, fileName);
+      fileNames.forEach((fileName) => {
+        const filePath = path.join(folderPath, fileName);
 
-    //     fs.unlink(filePath, (error) => {
-    //       if (error) {
-    //         console.log(`Failed to delete ${fileName}: ${error.message}`);
-    //       }
-    //     });
-    //   });
-    //   const subcategoryIds = await modifiedData.subcategories.map((data) => {
-    //     return data.id;
-    //   });
-    //   for (let i = 0; i < subcategoryIds.length; i++) {
-    //     const productId = subcategoryIds[i];
-    //     const a = await subcategoryModel.destroy({
-    //       where: { id: subcategoryIds },
-    //     });
-    //     console.log(a);
-    //   }
-    // } catch (error) {
-    //   console.log(error);
-    // }
-    // try {
-    //   // delete category
-    //   const folderPath = path.join(process.cwd(), "public/category");
-    //   const filePath = path.join(folderPath, categoryId.category_images);
-    //   fs.unlink(filePath, (error) => {
-    //     if (error) {
-    //       console.log(`Failed to delete: ${error.message}`);
-    //     }
-    //   });
-    // } catch (error) {}
+        fs.unlink(filePath, (error) => {
+          if (error) {
+            console.log(`Failed to delete ${fileName}: ${error.message}`);
+          }
+        });
+      });
+      const subcategoryIds = await modifiedData.subcategories.map((data) => {
+        return data.id;
+      });
+      for (let i = 0; i < subcategoryIds.length; i++) {
+        const productId = subcategoryIds[i];
+        const a = await subcategoryModel.destroy({
+          where: { id: subcategoryIds },
+        });
+        console.log(a);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    try {
+      // delete category
+      const folderPath = path.join(process.cwd(), "public/category");
+      const filePath = path.join(folderPath, categoryId.category_images);
+      fs.unlink(filePath, (error) => {
+        if (error) {
+          console.log(`Failed to delete: ${error.message}`);
+        }
+      });
+    } catch (error) {}
 
-    // const category = await categoryModel.destroy({
-    //   where: { id: categoryId.id },
-    // });
-    // if (!category) {
-    //   return res.status(400).json({ status: false, message: "Delete failed" });
-    // }
-    // return res
-    //   .status(200)
-    //   .json({ status: true, message: "Delete successfully" });
+    const category = await categoryModel.destroy({
+      where: { id: categoryId.id },
+    });
+    if (!category) {
+      return res.status(400).json({ status: false, message: "Delete failed" });
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: "Delete successfully" });
     res.send(modifiedData);
   } catch (error) {
     return next(error);
