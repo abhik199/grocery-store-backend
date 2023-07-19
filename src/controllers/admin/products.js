@@ -25,6 +25,7 @@ exports.createProducts = async (req, res, next) => {
     stock: joi.number().required().max(500).min(0),
     subcategoryId: joi.string().required().min(1).max(10),
     description: joi.string().optional().max(250),
+    accessToken: joi.string().optional(),
   });
   const { error } = productSchema.validate(req.body);
   if (error) {

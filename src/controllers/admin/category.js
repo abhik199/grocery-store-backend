@@ -3,6 +3,9 @@ const {
   productModel,
   productImgModel,
   subcategoryModel,
+  productCategoryModels,
+  productSubCategoryModels,
+  categorySUbCategoryModels,
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/errorHandler");
 const { Op } = require("sequelize");
@@ -208,154 +211,6 @@ exports.fetchCategoryById = async (req, res, next) => {
 // image Delete , subcategory, products , all images delete
 
 exports.deleteCategory = async (req, res, next) => {
-  if (!req.params.id) {
-    return res
-      .status(400)
-      .json({ status: false, message: "category id required" });
-  }
-
-  try {
-    const categoryId = await categoryModel.findOne({
-      where: { id: req.params.id },
-    });
-    if (!categoryId) {
-      return res.status(400).json({ status: false, message: "Id not valid" });
-    }
-    // const product = await categoryModel.findOne({
-    //   where: { id: req.params.id },
-    //   attributes: {
-    //     exclude: ["createdAt", "updatedAt"],
-    //   },
-    //   include: [
-    //     {
-    //       model: productModel,
-    //       attributes: {
-    //         exclude: ["createdAt", "updatedAt"],
-    //       },
-    //       include: [
-    //         {
-    //           model: productImgModel,
-    //           attributes: {
-    //             exclude: ["createdAt", "updatedAt"],
-    //           },
-    //         },
-    //       ],
-    //     },
-    //     {
-    //       model: subcategoryModel,
-    //       attributes: {
-    //         exclude: ["createdAt", "updatedAt"],
-    //       },
-    //     },
-    //   ],
-    // });
-
-    // const modifiedData = {
-    //   category: product.name,
-    //   id: product.id,
-    //   category_images: product.category_images,
-    //   products: product.products.flatMap((product) => product.id),
-    //   subcategories: product.subcategories.map((subcategory) => ({
-    //     id: subcategory.id,
-    //     subcategory_images: subcategory.subcategory_images,
-    //   })),
-    //   images: product.products.flatMap((product) =>
-    //     product.product_images.map((image) => image.images)
-    //   ),
-    // };
-
-    // try {
-    //   // delete product image
-    //   const productImages = modifiedData.images.map((data) => {
-    //     return data;
-    //   });
-
-    //   const fileNames = productImages.map((imageUrl) => {
-    //     return imageUrl;
-    //   });
-    //   const folderPath = path.join(process.cwd(), "public/product"); // Adjust
-
-    //   fileNames.forEach((fileName) => {
-    //     const filePath = path.join(folderPath, fileName);
-
-    //     fs.unlink(filePath, (error) => {
-    //       if (error) {
-    //         console.log(`Failed to delete ${fileName}: ${error.message}`);
-    //       }
-    //     });
-    //   });
-
-    //   const productIds = modifiedData.products.map((product) => product.id);
-
-    //   for (let i = 0; i < productIds.length; i++) {
-    //     const productId = productIds[i];
-    //     await productModel.destroy({ where: { id: productId } });
-    //   }
-    // } catch (error) {
-    //   console.log(error);
-    // }
-
-    // try {
-    //   // delete multiple sub category images
-    //   const subcategoryImages = await modifiedData.subcategories.map((date) => {
-    //     return date.subcategory_images;
-    //   });
-
-    //   const fileNames = subcategoryImages.map((imageUrl) => {
-    //     return imageUrl;
-    //   });
-    //   const folderPath = path.join(process.cwd(), "public/subcategory"); // Adjust
-
-    //   fileNames.forEach((fileName) => {
-    //     const filePath = path.join(folderPath, fileName);
-
-    //     fs.unlink(filePath, (error) => {
-    //       if (error) {
-    //         console.log(`Failed to delete ${fileName}: ${error.message}`);
-    //       }
-    //     });
-    //   });
-    //   const subcategoryIds = await modifiedData.subcategories.map((data) => {
-    //     return data.id;
-    //   });
-    //   for (let i = 0; i < subcategoryIds.length; i++) {
-    //     const productId = subcategoryIds[i];
-    //     const a = await subcategoryModel.destroy({
-    //       where: { id: subcategoryIds },
-    //     });
-    //     console.log(a);
-    //   }
-    // } catch (error) {
-    //   console.log(error);
-    // }
-    // try {
-    //   // delete category
-    //   const folderPath = path.join(process.cwd(), "public/category");
-    //   const filePath = path.join(folderPath, categoryId.category_images);
-    //   fs.unlink(filePath, (error) => {
-    //     if (error) {
-    //       console.log(`Failed to delete: ${error.message}`);
-    //     }
-    //   });
-    // } catch (error) {}
-
-    const category = await categoryModel.destroy({
-      where: { id: categoryId.id },
-    });
-    if (!category) {
-      return res.status(400).json({ status: false, message: "Delete failed" });
-    }
-    return res
-      .status(200)
-      .json({ status: true, message: "Delete successfully" });
-    res.send(modifiedData);
-  } catch (error) {
-    return next(error);
-  }
-};
-
-// test category
-exports.deleteTestCategory = async (req, res, next) => {
   const categorySchema = joi.object({
     id: joi.number().required(),
   });
@@ -369,7 +224,9 @@ exports.deleteTestCategory = async (req, res, next) => {
       where: { id: req.params.id },
     });
     if (!categoryId) {
-      return res.status(400).json({ status: false, message: "Id not valid" });
+      return res
+        .status(400)
+        .json({ status: false, message: "category not found" });
     }
     const product = await categoryModel.findOne({
       where: { id: req.params.id },
@@ -389,30 +246,44 @@ exports.deleteTestCategory = async (req, res, next) => {
                 exclude: ["createdAt", "updatedAt"],
               },
             },
+            {
+              model: subcategoryModel, // Include the subcategory model
+              attributes: {
+                exclude: ["createdAt", "updatedAt"],
+              },
+            },
           ],
-        },
-        {
-          model: subcategoryModel,
-          attributes: {
-            exclude: ["createdAt", "updatedAt"],
-          },
         },
       ],
     });
+
+    if (product.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "product not found" });
+    }
 
     const modifiedData = {
       category: product.name,
       id: product.id,
       category_images: product.category_images,
       products: product.products.flatMap((product) => product.id),
-      subcategories: product.subcategories.map((subcategory) => ({
-        id: subcategory.id,
-        subcategory_images: subcategory.subcategory_images,
-      })),
+      subcategories: product.products.flatMap((product) => {
+        return product.subcategories.map((subcategory) => ({
+          id: subcategory.id,
+          subcategory_images: subcategory.subcategory_images,
+        }));
+      }),
       images: product.products.flatMap((product) =>
         product.product_images.map((image) => image.images)
       ),
     };
+
+    if (modifiedData.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "product not found" });
+    }
 
     try {
       // delete product image
@@ -430,75 +301,98 @@ exports.deleteTestCategory = async (req, res, next) => {
 
         fs.unlink(filePath, (error) => {
           if (error) {
-            console.log(`Failed to delete ${fileName}: ${error.message}`);
+            return next(error);
           }
         });
       });
 
-      const productIds = modifiedData.products.map((product) => product.id);
+      const productIds = modifiedData.products.map((ids) => ids);
 
-      for (let i = 0; i < productIds.length; i++) {
-        const productId = productIds[i];
+      // Deleting product images
+      for (const productId of productIds) {
+        await productImgModel.destroy({ where: { productId } });
+      }
+
+      // Deleting category and subcategory associations
+      // working
+
+      await categorySUbCategoryModels.destroy({
+        where: { categoryId: req.params.id },
+      });
+
+      // Deleting associations between products and subcategories
+      // working
+      for (const productId of productIds) {
+        console.log(productId);
+        await productSubCategoryModels.destroy({ where: { productId } });
+      }
+
+      // Deleting associations between categories and products
+      await productCategoryModels.destroy({
+        where: { categoryId: req.params.id },
+      });
+
+      // Deleting products
+      for (const productId of productIds) {
         await productModel.destroy({ where: { id: productId } });
       }
-    } catch (error) {
-      console.log(error);
-    }
-
-    try {
-      // delete multiple sub category images
-      const subcategoryImages = await modifiedData.subcategories.map((date) => {
-        return date.subcategory_images;
+      // deleting images and data in database for subcategory
+      const sub = modifiedData.subcategories.map((sub) => {
+        return { id: sub.id, subcategory_images: sub.subcategory_images };
       });
+      const ids = sub.map((sub) => sub.id);
+      const subcategoryImages = sub.map((sub) => sub.subcategory_images);
 
-      const fileNames = subcategoryImages.map((imageUrl) => {
+      // delete images in locally
+      const fileName = subcategoryImages.map((imageUrl) => {
         return imageUrl;
       });
-      const folderPath = path.join(process.cwd(), "public/subcategory"); // Adjust
+      const fol_path = path.join(process.cwd(), "public/subcategory"); // Adjust
 
       fileNames.forEach((fileName) => {
-        const filePath = path.join(folderPath, fileName);
+        const filePath = path.join(fol_path, fileName);
 
         fs.unlink(filePath, (error) => {
           if (error) {
-            console.log(`Failed to delete ${fileName}: ${error.message}`);
+            console.log(error);
           }
         });
       });
-      const subcategoryIds = await modifiedData.subcategories.map((data) => {
-        return data.id;
-      });
-      for (let i = 0; i < subcategoryIds.length; i++) {
-        const productId = subcategoryIds[i];
-        const a = await subcategoryModel.destroy({
-          where: { id: subcategoryIds },
+      await subcategoryModel.destroy({ where: { categoryId: req.params.id } });
+
+      // delete category images and data in database
+
+      const folder_path = path.join(process.cwd(), "public/category");
+      console.log(folder_path);
+      console.log(modifiedData.category_images);
+      const imagesPath = path.join(folder_path, modifiedData.category_images);
+      fs.access(imagesPath, fs.constants.F_OK, (error) => {
+        if (error) {
+          console.error("File does not exist:", imagesPath);
+          return;
+        }
+
+        fs.unlink(imagesPath, (error) => {
+          if (error) {
+            console.error("Error deleting file:", error);
+            return;
+          }
+
+          console.log("File deleted successfully:", imagesPath);
         });
-        console.log(a);
+      });
+      const delete_category = await categoryModel.destroy({
+        where: { id: req.params.id },
+      });
+      if (!delete_category) {
+        return res.status(400).json({ status: false, message: "Failed" });
       }
+      return res
+        .status(200)
+        .json({ status: true, message: "Category delete successfully" });
     } catch (error) {
       console.log(error);
     }
-    try {
-      // delete category
-      const folderPath = path.join(process.cwd(), "public/category");
-      const filePath = path.join(folderPath, categoryId.category_images);
-      fs.unlink(filePath, (error) => {
-        if (error) {
-          console.log(`Failed to delete: ${error.message}`);
-        }
-      });
-    } catch (error) {}
-
-    const category = await categoryModel.destroy({
-      where: { id: categoryId.id },
-    });
-    if (!category) {
-      return res.status(400).json({ status: false, message: "Delete failed" });
-    }
-    return res
-      .status(200)
-      .json({ status: true, message: "Delete successfully" });
-    res.send(modifiedData);
   } catch (error) {
     return next(error);
   }

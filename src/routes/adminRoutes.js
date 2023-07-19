@@ -31,4 +31,7 @@ routes.get("/order", [auth, admin], adminOrder.fetchOrdersByAmin);
 routes.get("/order/:id", [auth, admin]);
 routes.patch("/order/:id", [auth, admin]);
 
+// test routes 
+
+
 module.exports = routes;

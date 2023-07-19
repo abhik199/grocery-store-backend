@@ -38,6 +38,6 @@ const product = sequelize.define("product", {
   },
 });
 
-product.sync({ alter: true });
+product.sync({ alter: false });
 
 module.exports = product;
