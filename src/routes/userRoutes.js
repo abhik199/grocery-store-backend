@@ -14,15 +14,13 @@ const {
 routes.get("/category", userCategory.getCategory);
 routes.get("/category/:id", userCategory.fetchAllByCategoryId);
 
-// user sub_category
-
+// user subcategory
 routes.get("/subcategory/:id", userSubCategory.fetchProductBySubCategoryId);
 
 // user product
 
 routes.get("/product", userProduct.fetchAllPopularProduct); // i am using for testing
 routes.get("/product/:id", userProduct.getSingleProduct);
-
 routes.get("/popular_product", userProduct.fetchAllPopularProduct);
 
 // card

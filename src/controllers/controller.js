@@ -3,6 +3,7 @@ exports.adminCategory = require("./admin/category");
 exports.adminProduct = require("./admin/products");
 exports.adminOrder = require("./admin/order");
 exports.adminSubCategory = require("./admin/sub_category");
+exports.adminDashboard = require("./admin/dashboard");
 
 // user routes
 exports.userProduct = require("./users/product");

@@ -101,7 +101,7 @@ exports.fetchSubCategoryByAdmin = async (req, res, next) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
-    const { name, id } = req.query;
+    const { subcategory, id } = req.query;
     const whereCondition = {};
     if (subcategory && id) {
       whereCondition[Op.and] = [
@@ -113,22 +113,22 @@ exports.fetchSubCategoryByAdmin = async (req, res, next) => {
     } else if (id) {
       whereCondition.id = { [Op.eq]: id };
     }
-    const subcategory = await categoryModel.findAll({
+    const sub_category = await subcategoryModel.findAll({
       where: whereCondition,
       attributes: { exclude: ["createdAt", "updatedAt"] },
       offset: offset,
       limit: limit,
     });
-    if (subcategory.length === 0) {
+    if (sub_category.length === 0) {
       return res
         .status(404)
         .json({ status: false, message: "subcategory not found" });
     }
-    const totalCount = await productModel.count();
+    const totalCount = await subcategoryModel.count();
     const totalPages = Math.ceil(totalCount / limit);
     return res.status(200).json({
       status: true,
-      subcategory,
+      subcategory: sub_category,
       totalPages,
       totalItems: totalCount,
       currentPage: page,
@@ -152,6 +152,7 @@ exports.fetchSubCategoryById = async (req, res, next) => {
     }
     const subcategory = await subcategoryModel.findOne({
       where: { id: subcategoryId.id },
+      attributes: { exclude: ["createdAt", "updatedAt"] },
     });
     if (subcategory.length === 0) {
       return res
@@ -164,8 +165,57 @@ exports.fetchSubCategoryById = async (req, res, next) => {
   }
 };
 
+exports.updateSubCategory = async (req, res, next) => {
+  const id = req.params.id;
+  if (!id) {
+    return res.status(400).json({ status: false, message: "id required" });
+  }
+  try {
+    const subcategoryId = await subcategoryModel.findOne({ where: { id: id } });
+    if (!subcategoryId) {
+      return res.status(400).json({ status: "subcategory id not found" });
+    }
+    const subcategory = await subcategoryModel.update(
+      {
+        subcategory: req.body.subcategory,
+      },
+      { where: { id: id }, returning: true }
+    );
+    // Image Upload
+    if (req.file !== undefined && !req.file.length > 0) {
+      const image_url = `${req.file.filename}`;
+      try {
+        await subcategoryModel.update(
+          {
+            subcategory_images: image_url,
+          },
+          {
+            where: {
+              id: subcategoryId.id,
+            },
+            returning: true,
+          }
+        );
+        return res
+          .status(200)
+          .json({ status: true, message: "update successfully" });
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    if (!subcategory) {
+      return res.status(400).json({ status: false, message: "updated failed" });
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: "update successfully" });
+  } catch (error) {
+    return next(error);
+  }
+};
 exports.deleteSubCategory = async (req, res, next) => {
   const id = req.params.id;
+  return res.send("under working");
   if (!id) {
     return res.status(400).json({ status: false, message: "Id required" });
   }
@@ -175,8 +225,34 @@ exports.deleteSubCategory = async (req, res, next) => {
   }
 };
 
-exports.updateSubCategory = async (req, res, next) => {
+exports.fetchSubCategoryByCategoryId = async (req, res, next) => {
+  const id = req.params.id;
+  if (!id) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Category id required" });
+  }
   try {
+    const categoryId = await categoryModel.findOne({
+      where: { id: id },
+    });
+    if (!categoryId) {
+      return res
+        .status(400)
+        .json({ status: false, message: "category id wrong" });
+    }
+    const subcategory = await subcategoryModel.findAll({
+      where: { categoryId: categoryId.id },
+      attributes: {
+        exclude: ["createdAt", "updatedAt", "subcategory_images", "items"],
+      },
+    });
+    if (subcategory.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "subcategory not found" });
+    }
+    return res.status(200).json({ status: true, subcategory });
   } catch (error) {
     return next(error);
   }

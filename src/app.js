@@ -23,6 +23,7 @@ app.use(
     exposedHeaders: ["X-Total Count "], // for pagination
   })
 );
+
 app.use(express.static("public"));
 
 // Api Routes
