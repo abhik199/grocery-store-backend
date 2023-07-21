@@ -6,7 +6,13 @@ const {
   subcategoryModel,
   categoryModel,
   categorySUbCategoryModels,
+  productCategoryModels,
+  productSubCategoryModels,
+  productImgModel,
+  productModel,
+  orderModel,
 } = require("../../models/models");
+const { Op } = require("sequelize");
 
 exports.createSubcategory = async (req, res, next) => {
   const subcategorySchema = joi.object({
@@ -215,11 +221,133 @@ exports.updateSubCategory = async (req, res, next) => {
 };
 exports.deleteSubCategory = async (req, res, next) => {
   const id = req.params.id;
-  return res.send("under working");
   if (!id) {
     return res.status(400).json({ status: false, message: "Id required" });
   }
   try {
+    const subcategoryId = await subcategoryModel.findOne({ where: { id: id } });
+    if (!subcategoryId) {
+      return res
+        .status(404)
+        .json({ status: false, message: "subcategory not found" });
+    }
+    const subcategory = await subcategoryModel.findOne({
+      where: { id: subcategoryId.id },
+      attributes: {
+        exclude: ["createdAt", "updatedAt"],
+      },
+      include: [
+        {
+          model: productModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+          include: [
+            {
+              model: subcategoryId,
+              attributes: {
+                exclude: ["createdAt", "updatedAt"],
+              },
+            },
+          ],
+          include: [
+            {
+              model: productImgModel,
+              attributes: {
+                exclude: ["createdAt", "updatedAt"],
+              },
+            },
+          ],
+        },
+      ],
+    });
+    if (subcategory.length === 0) {
+      return res
+        .status(400)
+        .json({ status: false, message: "subcategory not found" });
+    }
+    const modifiedData = {
+      id: subcategory.id,
+      subcategory_images: subcategory.subcategory_images,
+      products: subcategory.products.flatMap((product) => product.id),
+      images: subcategory.products.flatMap((product) =>
+        product.product_images.map((image) => image.images)
+      ),
+    };
+    if (
+      subcategory &&
+      subcategory.products &&
+      subcategory.products.length > 0
+    ) {
+      // delete  product images
+      const productIds = modifiedData.products.map((ids) => {
+        return ids;
+      });
+      for (const productId of productIds) {
+        console.log(productId);
+        await productImgModel.destroy({ where: { productId } });
+      }
+      await categorySUbCategoryModels.destroy({
+        where: { subcategoryId: modifiedData.id },
+      });
+
+      // delete products
+      const productsIds = await productSubCategoryModels.findAll({
+        where: { subcategoryId: modifiedData.id },
+      });
+      const productId = productsIds.map((ids) => ids.productId);
+
+      if (productId.length > 1) {
+        await productSubCategoryModels.destroy({
+          where: { subcategoryId: modifiedData.id },
+        });
+      }
+      for (const productId of productIds) {
+        await productSubCategoryModels.destroy({
+          where: { productId: productId },
+        });
+        await productModel.destroy({ where: { id: productId } });
+        await productCategoryModels.destroy({
+          where: { productId: productId },
+        });
+        await orderModel.destroy({ where: { productId: productId } });
+      }
+      const deleteSubCategory = await subcategoryModel.destroy({
+        where: { id: modifiedData.id },
+      });
+
+      if (!deleteSubCategory) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Delete failed" });
+      }
+      return res
+        .status(200)
+        .json({ status: false, message: "subcategory delete" });
+    } else {
+      // If there are no products or the subcategory is empty, respond with the subcategory data
+      await categorySUbCategoryModels.destroy({
+        where: { subcategoryId: modifiedData.id },
+      });
+      // delete
+      await productSubCategoryModels.destroy({
+        where: { subcategoryId: modifiedData.id },
+      });
+      const deleteSubCategory = await subcategoryModel.destroy({
+        where: { id: modifiedData.id },
+      });
+
+      if (!deleteSubCategory) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Delete failed" });
+      }
+
+      // todo delete images in locally
+      return res
+        .status(200)
+        .json({ status: true, message: "subcategory delete" });
+    }
   } catch (error) {
     return next(error);
   }

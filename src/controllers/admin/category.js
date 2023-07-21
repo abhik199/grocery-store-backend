@@ -211,12 +211,9 @@ exports.fetchCategoryById = async (req, res, next) => {
 // image Delete , subcategory, products , all images delete
 
 exports.deleteCategory = async (req, res, next) => {
-  const categorySchema = joi.object({
-    id: joi.number().required(),
-  });
-  const { error } = categorySchema.validate(req.params);
-  if (error) {
-    return next(error);
+  const id = req.params.id;
+  if (!id) {
+    return res.status(200).json({ status: false, message: "Id required" });
   }
 
   try {
@@ -362,25 +359,8 @@ exports.deleteCategory = async (req, res, next) => {
 
       // delete category images and data in database
 
-      const folder_path = path.join(process.cwd(), "public/category");
-      console.log(folder_path);
-      console.log(modifiedData.category_images);
-      const imagesPath = path.join(folder_path, modifiedData.category_images);
-      fs.access(imagesPath, fs.constants.F_OK, (error) => {
-        if (error) {
-          console.error("File does not exist:", imagesPath);
-          return;
-        }
+      // const folder_path = path.join(process.cwd(), "public/category");
 
-        fs.unlink(imagesPath, (error) => {
-          if (error) {
-            console.error("Error deleting file:", error);
-            return;
-          }
-
-          console.log("File deleted successfully:", imagesPath);
-        });
-      });
       const delete_category = await categoryModel.destroy({
         where: { id: req.params.id },
       });

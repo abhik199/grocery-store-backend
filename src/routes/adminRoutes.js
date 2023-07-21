@@ -5,7 +5,7 @@ const { upload } = require("./multer");
 
 
 // dashboard 
-routes.get('/users', [auth, admin],adminDashboard.dashboardUsers)
+routes.get('/users/:user',adminDashboard.dashboardUsers)
 routes.get('/active_order',[auth,admin],adminDashboard.dashboardOrder)
 
 
@@ -20,7 +20,8 @@ routes.get("/category/:id", [auth, admin], adminCategory.fetchCategoryById);
 routes.post('/subcategory', [auth, admin],upload.single('subcategory_image'), adminSubCategory.createSubcategory);
 routes.delete('/subcategory/:id', [auth, admin],adminSubCategory.deleteSubCategory);
 routes.patch('/subcategory/:id', [auth, admin], upload.single('subcategory_image'), adminSubCategory.updateSubCategory);
-routes.get('/subcategory', [auth, admin], adminSubCategory.fetchSubCategoryByAdmin)
+// remove remove authentication for testing 
+routes.get('/subcategory', adminSubCategory.fetchSubCategoryByAdmin)
 routes.get('/subcategory/:id', [auth, admin], adminSubCategory.fetchSubCategoryById)
 
 // filter subcategory linked category
