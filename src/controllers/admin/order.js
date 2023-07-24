@@ -1,17 +1,18 @@
-const { orderModel, productModel } = require("../../models/models");
+const { Op } = require("sequelize");
+const { orderModel, productModel, userModel } = require("../../models/models");
 
-exports.fetchOrdersByAmin = async (req, res, next) => {
+exports.fetchAllOrderByAdmin = async (req, res, next) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
-    const { name } = req.query;
+    const { items } = req.query;
 
     const whereCondition = {};
 
-    if (name) {
-      whereCondition.name = { [Op.like]: `%${name}%` };
+    if (items) {
+      whereCondition.items = { [Op.like]: `%${items}%` };
     }
     const get_order = await orderModel.findAll({
       where: whereCondition,
@@ -20,8 +21,20 @@ exports.fetchOrdersByAmin = async (req, res, next) => {
       },
       include: [
         {
-          model: productModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
+          model: userModel,
+          attributes: {
+            exclude: [
+              "createdAt",
+              "updatedAt",
+              "roles",
+              "verification_token",
+              "expiration_time",
+              "is_verify",
+              "profile",
+              "password",
+              "email",
+            ],
+          },
         },
       ],
       offset: offset,
@@ -33,33 +46,52 @@ exports.fetchOrdersByAmin = async (req, res, next) => {
         .status(404)
         .json({ status: false, message: "order not found" });
     }
+    const totalCount = await orderModel.count();
 
-    return res.status(200).json({ status: true, order: get_order });
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return res.status(200).json({
+      status: true,
+      order: get_order,
+      totalPages,
+      totalItems: totalCount,
+      currentPage: page,
+    });
   } catch (error) {
     return next(error);
   }
 };
 
-exports.updateStatus = async (req, res, next) => {
+exports.updateOrderStatus = async (req, res, next) => {
   const id = req.params.id;
   if (!id) {
     return res.status(400).json({ status: false, message: "Id required" });
   }
   try {
-    const order = await orderModel.update(
-      {
-        status: req.body.status,
-      },
-      { where: { id: id }, returning: true }
-    );
-    if (!order) {
+    const { status } = req.body;
+    if (!status) {
       return res
         .status(400)
-        .json({ status: false, message: "Status update Failed" });
+        .json({ status: false, message: "Status is required" });
     }
-    return res
-      .status(200)
-      .json({ status: true, message: "status update successfully" });
+
+    const [rowsAffected, updatedOrders] = await orderModel.update(
+      { status: status },
+      { where: { id: id }, returning: true }
+    );
+
+    if (rowsAffected > 0) {
+      return res.status(200).json({
+        status: true,
+        message: "Status update successful",
+        updatedOrders,
+      });
+    } else {
+      return res.status(400).json({
+        status: false,
+        message: "Status update failed. Order not found.",
+      });
+    }
   } catch (error) {
     return next(error);
   }
@@ -78,7 +110,29 @@ exports.fetchOrdersById = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "Order id not valid" });
     }
-    const order = await orderModel.findOne({ where: { id: orderId.id } });
+    const order = await orderModel.findOne({
+      where: { id: orderId.id },
+      attributes: {
+        exclude: ["createdAt", "updatedAt"],
+      },
+      include: [
+        {
+          model: userModel,
+          attributes: {
+            exclude: [
+              "createdAt",
+              "updatedAt",
+              "password",
+              "profile",
+              "is_verify",
+              "expiration_time",
+              "verification_token",
+              "roles",
+            ],
+          },
+        },
+      ],
+    });
     if (order.length === 0) {
       return res
         .status(404)
@@ -90,18 +144,4 @@ exports.fetchOrdersById = async (req, res, next) => {
   }
 };
 
-exports.updateOrder = async (req, res) => {
-  const id = req.params.id;
-  if (!id) {
-    return res.status(400).json({ status: false, message: "Id required" });
-  }
-
-  try {
-    const update_order = await orderModel.update(
-      {},
-      { where: { id: id }, returning: true }
-    );
-  } catch (error) {
-    return next(error);
-  }
-};
+// delete

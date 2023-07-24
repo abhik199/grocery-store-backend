@@ -31,7 +31,7 @@ const Addresses = sequelize.define("addresses", {
     type: DataTypes.STRING,
   },
   address_type: {
-    type: DataTypes.STRING,
+    type: DataTypes.ENUM("Home", "Apartment", "Business", "Other"),
   },
   userId: {
     type: DataTypes.INTEGER,
@@ -42,7 +42,7 @@ const Addresses = sequelize.define("addresses", {
   },
 });
 
-Addresses.sync();
+Addresses.sync({ alter: true });
 
 Users.hasMany(Addresses, {
   foreignKey: "userId",

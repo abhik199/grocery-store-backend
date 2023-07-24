@@ -39,9 +39,9 @@ routes.delete("/product_image/:ids", [auth, admin], adminProduct.deleteImage);
 routes.patch("/product_image/:id",[auth, admin],upload.single("product_images"),adminProduct.updateImage);
 
 // user order
-routes.get("/order", [auth, admin], adminOrder.fetchOrdersByAmin);
-routes.get("/order/:id", [auth, admin]);
-routes.patch("/order/:id", [auth, admin]);
+routes.get("/order", [auth, admin], adminOrder.fetchAllOrderByAdmin);
+routes.get("/order/:id", [auth, admin],adminOrder.fetchOrdersById);
+routes.patch("/order/:id", [auth, admin],adminOrder.updateOrderStatus);
 
 
 

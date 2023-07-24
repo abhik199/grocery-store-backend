@@ -1,42 +1,45 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../../config/database");
-const user = require("./auth/register");
-const product = require("./product");
+const User = require("./auth/register");
+const paymentMethods = ["card", "cash"];
 
-const order = sequelize.define("order", {
+const Order = sequelize.define("order", {
   id: {
     type: DataTypes.INTEGER,
     allowNull: false,
     autoIncrement: true,
     primaryKey: true,
   },
-  productId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: product,
-      key: "id",
-    },
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: user,
-      key: "id",
-    },
-  },
   name: {
     type: DataTypes.STRING,
   },
   totalAmount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
   },
   totalItems: {
     type: DataTypes.INTEGER,
   },
   product_image: {
+    type: DataTypes.STRING,
+  },
+  discount_price: {
+    type: DataTypes.FLOAT,
+  },
+  selectedAddress: {
+    type: DataTypes.STRING,
+  },
+  userId: {
     type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: User,
+      key: "id",
+    },
+  },
+  paymentMethod: {
+    type: DataTypes.ENUM,
+    values: paymentMethods,
+    allowNull: false,
   },
   status: {
     type: DataTypes.ENUM("Pending", "Dispatched", "Delivered", "Cancelled"), // Pass the allowed
@@ -44,23 +47,11 @@ const order = sequelize.define("order", {
   },
 });
 
-// product
-product.hasMany(order, {
-  foreignKey: "productId",
-});
-order.belongsTo(product, {
-  foreignKey: "productId",
-});
-
 // User
 
-user.hasMany(order, {
-  foreignKey: "userId",
-});
-order.belongsTo(order, {
-  foreignKey: "userId",
-});
+User.hasMany(Order, { foreignKey: "userId" });
+Order.belongsTo(User, { foreignKey: "userId" });
 
-order.sync();
+Order.sync({ alter: true });
 
-module.exports = order;
+module.exports = Order;

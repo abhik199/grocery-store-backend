@@ -29,20 +29,6 @@ exports.createProducts = async (req, res, next) => {
   });
   const { error } = productSchema.validate(req.body);
   if (error) {
-    // const imageFiles = req.files.filename;
-    // const fileNames = imageFiles.map((img) => {
-    //   return img;
-    // });
-    // const folderPath = path.join(process.cwd(), "public/product");
-    // fileNames.forEach((fileName) => {
-    //   const filePath = path.join(folderPath, fileName);
-    //   fs.unlink(filePath, (error) => {
-    //     if (error) {
-    //       console.log(`Failed to delete: ${error.message}`);
-    //     }
-    //   });
-    // });
-
     return next(error);
   }
   const { price, discount_price, categoryId, subcategoryId } = req.body;
@@ -101,6 +87,29 @@ exports.createProducts = async (req, res, next) => {
         });
       }
 
+      // Create product-category association
+      await productCategoryModels.create({
+        categoryId: categoryId,
+        productId: product.id,
+      });
+
+      // Create product-subcategory associations
+      const subcategories = subcategoryId.split(",");
+      console.log(subcategories);
+
+      for (let i = 0; i < subcategories.length; i++) {
+        const subcategoryId = parseInt(subcategories[i]);
+        await productSubCategoryModels.create({
+          subcategoryId: subcategoryId,
+          productId: product.id,
+        });
+      }
+
+      // count product update sub category items fields
+      const productCount = await productSubCategoryModels.findAll({
+        where: { productId: product.id },
+      });
+
       if (req.files !== undefined && req.files.length > 0) {
         const imageFiles = req.files;
         try {
@@ -135,25 +144,7 @@ exports.createProducts = async (req, res, next) => {
         }
       }
 
-      // Create product-category association
-      await productCategoryModels.create({
-        categoryId: categoryId,
-        productId: product.id,
-      });
-
-      // Create product-subcategory associations
-      const subcategories = subcategoryId.split(",");
-      console.log(subcategories);
-
-      for (let i = 0; i < subcategories.length; i++) {
-        const subcategoryId = parseInt(subcategories[i]);
-        await productSubCategoryModels.create({
-          subcategoryId: subcategoryId,
-          productId: product.id,
-        });
-      }
-
-      res.status(200).json({
+      res.status(201).json({
         status: true,
         message: "Product created successfully",
         product: product,

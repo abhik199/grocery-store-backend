@@ -35,6 +35,7 @@ routes.post("/reviews", auth, userReviewsOnProduct.createProductReviews);
 // user order
 
 routes.post("/order", auth, userOrder.createOrder);
+routes.get("/order", auth, userOrder.fetchAllOrderByUse);
 
 // testing routes
 routes.get("/test/:id", userCategory.fetchAllProductByCategoryId);

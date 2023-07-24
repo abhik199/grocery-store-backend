@@ -385,3 +385,5 @@ exports.fetchSubCategoryByCategoryId = async (req, res, next) => {
     return next(error);
   }
 };
+
+// testing code  for count product items
