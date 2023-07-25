@@ -69,7 +69,7 @@ exports.userRegistration = async (req, res, next) => {
     const users = await userModel.findOne({ where: { email: email } });
 
     if (users) {
-      if (req.file.filename) {
+      if (req.file !== undefined) {
         const folderPath = path.join(process.cwd(), "public/profile");
         const filePath = path.join(folderPath, req.file.filename);
         fs.unlink(filePath, (error) => {
