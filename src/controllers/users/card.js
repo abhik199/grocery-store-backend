@@ -73,32 +73,38 @@ exports.addToCart = async (req, res, next) => {
         available_Stock: find_productId.stock,
       });
     }
+    const user = await cardModel.findAll({ where: { userId: userId } });
 
-    const count = await cardModel.findOne({ where: { productId: productId } });
+    const existingCartItem = user.find((item) => item.productId === productId);
 
-    if (count) {
-      const updateOld = await cardModel.update(
-        { quantity: quantity, subtotal: find_productId.price * quantity },
-        { where: { id: count.id }, returning: true }
+    if (existingCartItem) {
+      const updatedQuantity = existingCartItem.quantity + quantity;
+      const updatedSubtotal = find_productId.price * updatedQuantity;
+
+      const updateResult = await cardModel.update(
+        { quantity: updatedQuantity, subtotal: updatedSubtotal },
+        { where: { id: existingCartItem.id }, returning: true }
       );
 
-      await update_Stock(find_productId, quantity);
-
-      if (!updateOld) {
+      if (updateResult[0] > 0) {
+        await update_Stock(find_productId, quantity);
+        return res
+          .status(200)
+          .json({ status: true, message: "Card updated successfully" });
+      } else {
         return res
           .status(400)
           .json({ status: false, message: "Failed to update card" });
       }
-
-      return res
-        .status(200)
-        .json({ status: true, message: "Card updated successfully" });
     } else {
       const cart = await cardModel.create({
+        name: find_productId.name,
+        thumbnail: find_productId.thumbnail,
+        discount_price: find_productId.discount_price,
         quantity: req.body.quantity,
+        subtotal: find_productId.discount_price * quantity,
         productId: productId,
         userId: userId,
-        subtotal: find_productId.price * quantity,
       });
 
       if (!cart) {
@@ -106,6 +112,7 @@ exports.addToCart = async (req, res, next) => {
           .status(400)
           .json({ status: false, message: "Failed to create card" });
       }
+
       await update_Stock(find_productId, quantity);
 
       return res
@@ -113,6 +120,7 @@ exports.addToCart = async (req, res, next) => {
         .json({ status: true, message: "Card created successfully" });
     }
 
+    // update stock in product modules
     async function update_Stock(find_productId, quantity) {
       const [affectedRows] = await productModel.update(
         {

@@ -10,6 +10,8 @@ const {
   productSubCategoryModels,
   subcategoryModel,
   categorySUbCategoryModels,
+  cardModel,
+  orderModel,
 } = require("../../models/models");
 const customErrorHandler = require("../../../config/customErrorHandler");
 const joi = require("joi");
@@ -266,6 +268,14 @@ exports.fetchProductById = async (req, res, next) => {
   }
 
   try {
+    const productIs = await productModel.findOne({
+      where: { id: req.params.id },
+    });
+    if (!productIs) {
+      return res
+        .status(400)
+        .json({ status: false, message: "product id not found" });
+    }
     const product = await productModel.findOne({
       attributes: {
         exclude: ["createdAt", "updatedAt"],
@@ -384,6 +394,8 @@ exports.deleteProduct = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "Product Delete failed" });
     }
+    await cardModel.destroy({ where: { productId: req.params.id } });
+    await orderModel.destroy({ where: { productId: req.params.id } });
     return res
       .status(200)
       .json({ status: true, message: "Product Delete successfully" });
@@ -416,8 +428,6 @@ exports.updateProduct = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "Category not found" });
     }
-    // const subcategories = subcategoryId.split(",");
-    // const subcategoryIds = [subcategories];
     const subcategoryIds = subcategoryId.split(",");
 
     const checkSubcategories = await subcategoryModel.findAll({

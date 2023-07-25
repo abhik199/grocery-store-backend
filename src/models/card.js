@@ -10,11 +10,20 @@ const card = sequelize.define("card", {
     autoIncrement: true,
     primaryKey: true,
   },
+  name: {
+    type: DataTypes.STRING,
+  },
+  thumbnail: {
+    type: DataTypes.STRING,
+  },
+  discount_price: {
+    type: DataTypes.FLOAT,
+  },
   quantity: {
     type: DataTypes.INTEGER,
   },
   subtotal: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
   },
   productId: {
     type: DataTypes.INTEGER,

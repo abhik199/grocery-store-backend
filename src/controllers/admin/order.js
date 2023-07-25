@@ -40,7 +40,7 @@ exports.fetchAllOrderByAdmin = async (req, res, next) => {
       offset: offset,
       limit: limit,
     });
-    console.log(get_order);
+
     if (get_order.length === 0) {
       return res
         .status(404)

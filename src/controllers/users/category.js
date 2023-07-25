@@ -28,20 +28,6 @@ exports.getCategory = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "category not found" });
     }
-    // const categoryId = category.map((data) => {
-    //   return data.id;
-    // });
-    // for (let i = 0; i < categoryId.length; i++) {
-    //   const subcategoryId = parseInt(categoryId[i]); // Convert each ID to an integer
-
-    //   const countItem = await subcategoryModel.count({
-    //     where: { categoryId: categoryId },
-    //   });
-    // }
-    // // const countItem = await subcategoryModel.count({
-    // //   where: { categoryId: category.id },
-    // // });
-    // // console.log(category);
 
     const modifiedCategory = category.map((cat) => ({
       id: cat.id,

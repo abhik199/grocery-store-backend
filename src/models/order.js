@@ -13,29 +13,22 @@ const Order = sequelize.define("order", {
   name: {
     type: DataTypes.STRING,
   },
-  totalAmount: {
-    type: DataTypes.FLOAT,
-  },
-  totalItems: {
-    type: DataTypes.INTEGER,
-  },
-  product_image: {
+  thumbnail: {
     type: DataTypes.STRING,
   },
   discount_price: {
     type: DataTypes.FLOAT,
   },
-  selectedAddress: {
+  totalItems: {
+    type: DataTypes.INTEGER,
+  },
+  totalAmount: {
+    type: DataTypes.FLOAT,
+  },
+  address: {
     type: DataTypes.STRING,
   },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: User,
-      key: "id",
-    },
-  },
+
   paymentMethod: {
     type: DataTypes.ENUM,
     values: paymentMethods,
@@ -44,6 +37,17 @@ const Order = sequelize.define("order", {
   status: {
     type: DataTypes.ENUM("Pending", "Dispatched", "Delivered", "Cancelled"), // Pass the allowed
     defaultValue: "Pending",
+  },
+  productId: {
+    type: DataTypes.INTEGER,
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: User,
+      key: "id",
+    },
   },
 });
 

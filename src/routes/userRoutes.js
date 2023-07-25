@@ -33,9 +33,10 @@ routes.get("/card", auth, userCard.fetchCartByUser);
 routes.post("/reviews", auth, userReviewsOnProduct.createProductReviews);
 
 // user order
-
 routes.post("/order", auth, userOrder.createOrder);
 routes.get("/order", auth, userOrder.fetchAllOrderByUse);
+routes.patch("/order/:id/cancel", auth, userOrder.requestCancelOrder);
+routes.get("/order/:id", auth, userOrder.fetchOrderById);
 
 // testing routes
 routes.get("/test/:id", userCategory.fetchAllProductByCategoryId);
