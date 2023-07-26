@@ -20,6 +20,10 @@ const Images = sequelize.define("product_images", {
       key: "id",
     },
   },
+  status: {
+    type: DataTypes.ENUM("active", "inactive", "deleted"),
+    defaultValue: "active",
+  },
 });
 Images.sync({ alter: true });
 product.hasMany(Images, {

@@ -394,8 +394,8 @@ exports.deleteProduct = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "Product Delete failed" });
     }
-    await cardModel.destroy({ where: { productId: req.params.id } });
-    await orderModel.destroy({ where: { productId: req.params.id } });
+    // await cardModel.destroy({ where: { productId: req.params.id } });
+    // await orderModel.destroy({ where: { productId: req.params.id } });
     return res
       .status(200)
       .json({ status: true, message: "Product Delete successfully" });

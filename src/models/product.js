@@ -36,6 +36,10 @@ const product = sequelize.define("product", {
   description: {
     type: DataTypes.STRING,
   },
+  status: {
+    type: DataTypes.ENUM("active", "inactive", "deleted", "out of stock"),
+    defaultValue: "active",
+  },
 });
 
 product.sync({ alter: false });

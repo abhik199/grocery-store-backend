@@ -162,8 +162,11 @@ exports.fetchAllCategoryByAmin = async (req, res, next) => {
     }
 
     const category = await categoryModel.findAll({
-      where: whereCondition,
-      attributes: { exclude: ["createdAt", "updatedAt"] },
+      where: {
+        status: "active",
+        [Op.and]: whereCondition,
+      },
+      attributes: { exclude: ["createdAt", "updatedAt", "items", "status"] },
       offset: offset,
       limit: limit,
     });
@@ -173,7 +176,9 @@ exports.fetchAllCategoryByAmin = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "category not found" });
     }
-    const totalCount = await productModel.count();
+    const totalCount = await categoryModel.count({
+      where: { status: "active" },
+    });
     const totalPages = Math.ceil(totalCount / limit);
 
     return res.status(200).json({
@@ -195,7 +200,10 @@ exports.fetchCategoryById = async (req, res, next) => {
   }
   try {
     const category = await categoryModel.findOne({
-      where: { id: id },
+      where: {
+        status: "active",
+        id: id,
+      },
       attributes: { exclude: ["createdAt", "updatedAt"] },
     });
     if (!category) {
@@ -218,7 +226,10 @@ exports.deleteCategory = async (req, res, next) => {
 
   try {
     const categoryId = await categoryModel.findOne({
-      where: { id: req.params.id },
+      where: {
+        status: "active",
+        id: id,
+      },
     });
     if (!categoryId) {
       return res
@@ -263,6 +274,7 @@ exports.deleteCategory = async (req, res, next) => {
     const modifiedData = {
       category: product.name,
       id: product.id,
+      status: product.status,
       category_images: product.category_images,
       products: product.products.flatMap((product) => product.id),
       subcategories: product.products.flatMap((product) => {
@@ -377,3 +389,54 @@ exports.deleteCategory = async (req, res, next) => {
     return next(error);
   }
 };
+
+// exports.deleteCategory = async (req, res, next) => {
+//   const id = req.params.id;
+//   if (!id) {
+//     return res.status(200).json({ status: false, message: "Id required" });
+//   }
+//   try {
+//     const categoryId = await categoryModel.findOne({
+//       where: {
+//         // status: "active",
+//         id: id,
+//       },
+//     });
+//     if (!categoryId) {
+//       return res
+//         .status(400)
+//         .json({ status: false, message: "category Id not found" });
+//     }
+//     const product = await categoryModel.findOne({
+//       where: { id: categoryId },
+//       attributes: {
+//         exclude: ["createdAt", "updatedAt"],
+//       },
+//       include: [
+//         {
+//           model: productModel,
+//           attributes: {
+//             exclude: ["createdAt", "updatedAt"],
+//           },
+//           include: [
+//             {
+//               model: productImgModel,
+//               attributes: {
+//                 exclude: ["createdAt", "updatedAt"],
+//               },
+//             },
+//             {
+//               model: subcategoryModel, // Include the subcategory model
+//               attributes: {
+//                 exclude: ["createdAt", "updatedAt"],
+//               },
+//             },
+//           ],
+//         },
+//       ],
+//     });
+//     res.send(product);
+//   } catch (error) {
+//     return next(error);
+//   }
+// };

@@ -20,6 +20,10 @@ const productCategory = sequelize.define(
         key: "id",
       },
     },
+    status: {
+      type: DataTypes.ENUM("active", "inactive", "deleted"),
+      defaultValue: "active",
+    },
   },
   { timestamps: false }
 );

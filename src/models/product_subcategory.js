@@ -20,6 +20,10 @@ const productSubCategory = sequelize.define(
         key: "id",
       },
     },
+    status: {
+      type: DataTypes.ENUM("active", "inactive", "deleted"),
+      defaultValue: "active",
+    },
   },
   { timestamps: false }
 );
@@ -32,5 +36,5 @@ Subcategory.belongsToMany(Product, {
   through: productSubCategory,
 });
 
-productSubCategory.sync({ alter: true });
+productSubCategory.sync({ alter: false });
 module.exports = productSubCategory;

@@ -18,6 +18,10 @@ const Category = sequelize.define("category", {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  status: {
+    type: DataTypes.ENUM("active", "inactive", "deleted"),
+    defaultValue: "active",
+  },
 });
 
 Category.sync({ alter: true });

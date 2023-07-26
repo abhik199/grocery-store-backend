@@ -120,8 +120,10 @@ exports.fetchSubCategoryByAdmin = async (req, res, next) => {
       whereCondition.id = { [Op.eq]: id };
     }
     const sub_category = await subcategoryModel.findAll({
-      where: whereCondition,
-      attributes: { exclude: ["createdAt", "updatedAt"] },
+      where: {
+        status: "active",
+      },
+      attributes: { exclude: ["createdAt", "updatedAt", "status", "items"] },
       offset: offset,
       limit: limit,
     });
@@ -150,21 +152,30 @@ exports.fetchSubCategoryById = async (req, res, next) => {
     return res.status(400).json({ status: false, message: "Id required" });
   }
   try {
-    const subcategoryId = await subcategoryModel.findOne({ where: { id: id } });
+    const subcategoryId = await subcategoryModel.findOne({
+      where: {
+        id: id,
+      },
+    });
     if (!subcategoryId) {
       return res
         .status(404)
         .json({ status: false, message: "subcategory  id wrong" });
     }
     const subcategory = await subcategoryModel.findOne({
-      where: { id: subcategoryId.id },
-      attributes: { exclude: ["createdAt", "updatedAt"] },
+      where: {
+        status: "active",
+        id: subcategoryId.id,
+      },
+      attributes: { exclude: ["createdAt", "updatedAt", "status", "items"] },
     });
-    if (subcategory.length === 0) {
+
+    if (!subcategory) {
       return res
         .status(404)
-        .json({ status: false, message: "subcategory not found" });
+        .json({ status: false, message: "Subcategory not found" });
     }
+
     return res.status(200).json({ status: true, subcategory });
   } catch (error) {
     return next(error);
@@ -177,7 +188,12 @@ exports.updateSubCategory = async (req, res, next) => {
     return res.status(400).json({ status: false, message: "id required" });
   }
   try {
-    const subcategoryId = await subcategoryModel.findOne({ where: { id: id } });
+    const subcategoryId = await subcategoryModel.findOne({
+      where: {
+        status: "active",
+        id: id,
+      },
+    });
     if (!subcategoryId) {
       return res.status(400).json({ status: "subcategory id not found" });
     }
@@ -310,7 +326,7 @@ exports.deleteSubCategory = async (req, res, next) => {
         await productCategoryModels.destroy({
           where: { productId: productId },
         });
-        await orderModel.destroy({ where: { productId: productId } });
+        // await orderModel.destroy({ where: { productId: productId } });
       }
       const deleteSubCategory = await subcategoryModel.destroy({
         where: { id: modifiedData.id },

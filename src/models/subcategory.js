@@ -27,6 +27,10 @@ const subCategory = sequelize.define("subcategory", {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  status: {
+    type: DataTypes.ENUM("active", "inactive", "deleted"),
+    defaultValue: "active",
+  },
 });
 
 subCategory.sync({ alter: true });
