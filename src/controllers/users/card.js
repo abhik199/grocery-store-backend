@@ -7,28 +7,24 @@ exports.fetchCartByUser = async (req, res, next) => {
     const cartItems = await cardModel.findAll({
       where: { userId: id },
       attributes: { exclude: ["createdAt", "updatedAt"] },
-      include: [
-        {
-          model: productModel,
-          attributes: {
-            exclude: [
-              "createdAt",
-              "updatedAt",
-              "description",
-              "tag",
-              "discount_price",
-              "discount_percentage",
-              "stock",
-              "brand",
-            ],
-          },
-        },
-      ],
     });
     if (!cartItems) {
       return res.status(400).json({ status: false, message: "card is empty" });
     }
-    return res.status(200).json({ status: true, card: cartItems });
+    const modifyCard = cartItems.map((card) => ({
+      id: card.id,
+      name: card.name,
+      thumbnail: card.thumbnail,
+      discount_price: card.discount_price,
+      quantity: card.quantity,
+      subtotal: card.subtotal,
+    }));
+    const totalPrice = modifyCard.reduce(
+      (total, card) => total + card.subtotal,
+      0
+    );
+
+    return res.status(200).json({ status: true, card: modifyCard, totalPrice });
   } catch (error) {
     console.log(error);
     return next(error);

@@ -41,4 +41,6 @@ routes.get("/order/:id", auth, userOrder.fetchOrderById);
 // testing routes
 routes.get("/test/:id", userCategory.fetchAllProductByCategoryId);
 
+// testing
+
 module.exports = routes;

@@ -4,6 +4,7 @@ exports.adminProduct = require("./admin/products");
 exports.adminOrder = require("./admin/order");
 exports.adminSubCategory = require("./admin/sub_category");
 exports.adminDashboard = require("./admin/dashboard");
+exports.adminTransactions = require("./admin/transactions");
 
 // user routes
 exports.userProduct = require("./users/product");

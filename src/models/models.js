@@ -17,6 +17,4 @@ exports.subcategoryModel = require("./subcategory");
 exports.productCategoryModels = require("./product_category");
 exports.productSubCategoryModels = require("./product_subcategory");
 exports.categorySUbCategoryModels = require("./category_subcategory");
-
-// vender Models
-//
+exports.transactionsModels = require("./transactions");

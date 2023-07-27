@@ -411,53 +411,42 @@ exports.updateProduct = async (req, res, next) => {
       .status(400)
       .json({ status: false, message: "product id required" });
   }
-  const { price, discount_price, categoryId, subcategoryId } = req.body;
-  if (!categoryId || !subcategoryId) {
-    return res.status(400).json({
-      status: false,
-      message: "category and subcategory Id required field ",
-    });
+  console.log(req.body);
+  if (Object.keys(req.body).length === 0) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Please provide the request body" });
   }
-  try {
-    const checkCategoryId = await categoryModel.findOne({
-      where: { id: categoryId },
-    });
 
-    if (!checkCategoryId) {
+  const { price, discount_price, name, brand, tag, stock, description } =
+    req.body;
+
+  try {
+    const productId = await productModel.findOne({ where: { id: id } });
+    if (!productId) {
       return res
         .status(400)
-        .json({ status: false, message: "Category not found" });
+        .json({ status: false, message: "product id wrong" });
     }
-    const subcategoryIds = subcategoryId.split(",");
-
-    const checkSubcategories = await subcategoryModel.findAll({
-      where: { id: subcategoryIds },
-    });
-
-    if (checkSubcategories.length !== subcategoryIds.length) {
-      return res.status(400).json({
-        status: false,
-        message: "One or more subcategories not found",
-      });
+    let discounted_percentage;
+    if (price > 0 || discount_price > 0) {
+      const parsedPrice = parseFloat(price);
+      const parsedDiscountPrice = parseFloat(discount_price);
+      discounted_percentage =
+        ((parsedPrice - parsedDiscountPrice) / parsedPrice) * 100;
     }
-
-    const isLinked = await categorySUbCategoryModels.findAll({
-      where: { categoryId, subcategoryId: subcategoryIds },
-    });
-
-    if (isLinked.length !== subcategoryIds.length) {
-      return res.status(400).json({
-        status: false,
-        message: "One or more subcategories are not linked to the category",
-      });
-    }
-    const parsedPrice = parseFloat(price);
-    const parsedDiscountPrice = parseFloat(discount_price);
-    const discounted_percentage =
-      ((parsedPrice - parsedDiscountPrice) / parsedPrice) * 100;
 
     const [count, updatedRows] = await productModel.update(
-      { ...req.body, discount_percentage: discounted_percentage },
+      {
+        name: name,
+        brand: brand,
+        price: price,
+        discount_price: discount_price,
+        discount_percentage: discounted_percentage,
+        tag: tag,
+        stock: stock,
+        description: description,
+      },
       { where: { id: id }, returning: true }
     );
 
