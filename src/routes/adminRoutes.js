@@ -46,7 +46,9 @@ routes.patch("/order/:id", [auth, admin], adminOrder.updateOrderStatus);
 // transactions
 routes.get('/transactions', [auth, admin],adminTransactions.fetchAllTransactionsByAdmin)
 routes.get('/transactions/:id', [auth, admin],adminTransactions.fetchTransactionsById)
-routes.delete('/transactions/:id',[auth,admin],adminTransactions.deleteTransactions)
+routes.delete('/transactions/:id', [auth, admin], adminTransactions.deleteTransactions)
+
+// routes.get('/test',adminTransactions.createTransactions)
 
 
 

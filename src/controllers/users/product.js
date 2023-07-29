@@ -132,65 +132,133 @@ exports.getSingleProduct = async (req, res, next) => {
 
 exports.fetchAllPopularProduct = async (req, res, next) => {
   // Product Filter by subcategory
-  const { subcategory } = req.query;
   try {
-    const popular_productIds = await orderModel.findAll({
-      where: { status: "Delivered" },
-    });
-    const productIds = popular_productIds.map((order) => order.productId);
-
-    let productFilter = {
-      where: { id: productIds },
-      attributes: {
-        exclude: ["createdAt", "updatedAt"],
-      },
-      include: [
-        {
-          model: subcategoryModel,
-          attributes: {
-            exclude: ["createdAt", "updatedAt"],
-          },
-          through: { attributes: [] }, // Exclude join table attributes
-        },
-        {
-          model: productImgModel,
-          attributes: {
-            exclude: ["createdAt", "updatedAt"],
-          },
-        },
+    const { subcategory } = req.query;
+    const popularProducts = await orderModel.findAll({
+      attributes: [
+        "productId",
+        [sequelize.fn("COUNT", sequelize.col("productId")), "order_count"],
       ],
-      limit: 10,
-    };
+      group: ["productId"],
+      order: [[sequelize.literal("order_count"), "DESC"]],
+    });
 
+    let filteredProducts = popularProducts;
+    let whereCondition;
     if (subcategory) {
-      productFilter.include[0].where = { subcategory: subcategory };
+      whereCondition = {
+        "$subcategories.subcategory$": {
+          [Op.like]: `%${subcategory}%`,
+        },
+      };
     }
+    //
 
-    const products = await productModel.findAll(productFilter);
-
-    if (!products || products.length === 0) {
+    if (filteredProducts.length > 0) {
+      const popularProductsData = [];
+      for (const product of filteredProducts) {
+        const { productId, order_count } = product.get();
+        const getProduct = await productModel.findOne({
+          where: { id: productId },
+          attributes: { exclude: ["createdAt", "updatedAt"] },
+          include: [
+            {
+              model: subcategoryModel,
+              where: whereCondition,
+              attributes: { exclude: ["createdAt", "updatedAt"] },
+            },
+            {
+              model: productImgModel,
+              attributes: { exclude: ["createdAt", "updatedAt"] },
+            },
+          ],
+        });
+        if (!getProduct) {
+          // If the product is not found, continue to the next iteration
+          res.status(404).json({ status: false, message: "product not found" });
+          continue;
+        }
+        popularProductsData.push(getProduct);
+      }
+      const modifiedProduct = popularProductsData.map((product) => ({
+        id: product.id,
+        name: product.name,
+        brand: product.brand,
+        price: product.price,
+        discount_price: product.discount_price,
+        discount_percentage: product.discount_percentage,
+        tag: product.tag,
+        stock: product.stock,
+        description: product.description,
+        subcategories: product.subcategories.map((subcategory) => ({
+          id: subcategory.id,
+          subcategory: subcategory.subcategory,
+        })),
+        images: product.product_images.slice(0, 2).map((image) => image.images),
+      }));
+      return res.status(200).json({ status: true, products: modifiedProduct });
+    } else {
+      console.log("No orders found in the database.");
       return res
         .status(404)
-        .json({ status: false, message: "Products not found" });
+        .json({ status: false, message: "No popular products found" });
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+exports.fetchDailyBestSellsProduct = async (req, res, next) => {
+  try {
+    // Step 1: Determine the date range for "today"
+    const today = new Date();
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Step 2: Find the orders placed within that date range
+    const getOrder = await orderModel.findAll({
+      where: {
+        createdAt: {
+          [Op.gte]: startOfDay,
+          [Op.lte]: today,
+        },
+      },
+      include: [
+        // Assuming you have an association between orderModel and productModel
+        { model: productModel },
+      ],
+    });
+
+    // Step 3: Group the orders by the product ID and calculate the total quantity sold for each product
+    const productQuantities = {};
+    getOrder.forEach((order) => {
+      const productId = order.product.id;
+      const quantity = order.quantity;
+      if (productQuantities[productId]) {
+        productQuantities[productId] += quantity;
+      } else {
+        productQuantities[productId] = quantity;
+      }
+    });
+
+    // Step 4: Identify the product with the highest quantity sold
+    let bestSellingProductId;
+    let highestQuantity = 0;
+    for (const productId in productQuantities) {
+      if (productQuantities[productId] > highestQuantity) {
+        highestQuantity = productQuantities[productId];
+        bestSellingProductId = productId;
+      }
     }
 
-    const modifiedProducts = products.map((product) => ({
-      id: product.id,
-      title: product.name,
-      brand: product.brand,
-      price: product.price,
-      discount_price: product.discount_price,
-      tag: product.tag,
-      subcategories: product.subcategories.map(
-        (subcategory) => subcategory.subcategory
-      ),
-      images: product.product_images.map((image) => image.images).slice(0, 2),
-    }));
-
-    return res.status(200).json({
-      status: true,
-      products: modifiedProducts,
-    });
+    // Step 5: Return the best-selling product
+    if (bestSellingProductId) {
+      const bestSellingProduct = await productModel.findByPk(
+        bestSellingProductId
+      );
+      res.send(bestSellingProduct);
+    } else {
+      res.send("No best-selling product found for today.");
+    }
   } catch (error) {
     return next(error);
   }

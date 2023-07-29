@@ -87,3 +87,20 @@ exports.fetchAllSubCategory = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.fetchAllSubCategories = async (req, res, next) => {
+  try {
+    const subcategory = await subcategoryModel.findAll({
+      where: { status: "active" },
+      attributes: { exclude: ["createdAt", "updatedAt", "status"] },
+    });
+    if (subcategory.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "subcategory  not found " });
+    }
+    return res.status(200).json({ status: true, subcategory });
+  } catch (error) {
+    return next(error);
+  }
+};

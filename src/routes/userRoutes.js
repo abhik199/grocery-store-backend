@@ -9,6 +9,7 @@ const {
   userReviewsOnProduct,
   userSubCategory,
 } = require("../controllers/controller");
+const { verifyTransaction } = require("../controllers/users/payment");
 
 // user  category
 routes.get("/category", userCategory.getCategory);
@@ -16,6 +17,7 @@ routes.get("/category/:id", userCategory.fetchAllByCategoryId);
 
 // user subcategory
 routes.get("/subcategory/:id", userSubCategory.fetchProductBySubCategoryId);
+routes.get("/subcategory", userSubCategory.fetchAllSubCategories);
 
 // user product
 
@@ -42,5 +44,7 @@ routes.get("/order/:id", auth, userOrder.fetchOrderById);
 routes.get("/test/:id", userCategory.fetchAllProductByCategoryId);
 
 // testing
+
+routes.post("/verify", auth, verifyTransaction);
 
 module.exports = routes;

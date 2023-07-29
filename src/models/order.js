@@ -29,14 +29,16 @@ const Order = sequelize.define("order", {
     type: DataTypes.STRING,
   },
 
-  paymentMethod: {
-    type: DataTypes.ENUM,
-    values: paymentMethods,
-    allowNull: false,
+  method: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   status: {
-    type: DataTypes.ENUM("Pending", "Dispatched", "Delivered", "Cancelled"), // Pass the allowed
+    type: DataTypes.ENUM("Pending", "Dispatched", "Delivered", "Cancelled"),
     defaultValue: "Pending",
+  },
+  order_id: {
+    type: DataTypes.STRING,
   },
   productId: {
     type: DataTypes.INTEGER,

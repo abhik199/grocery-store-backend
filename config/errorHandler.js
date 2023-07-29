@@ -20,7 +20,6 @@ const errorHandler = (error, req, res, next) => {
       message: error.message,
     };
   }
-  console.log(data);
 
   return res.status(statusCode).json(data);
 };
