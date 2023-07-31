@@ -6,6 +6,7 @@ const {
   subcategoryModel,
   orderModel,
 } = require("../../models/models");
+
 const customErrorHandler = require("../../../config/customErrorHandler");
 const { Op } = require("sequelize");
 const path = require("path");
@@ -207,14 +208,13 @@ exports.fetchAllPopularProduct = async (req, res, next) => {
     return next(error);
   }
 };
+
 exports.fetchDailyBestSellsProduct = async (req, res, next) => {
   try {
-    // Step 1: Determine the date range for "today"
     const today = new Date();
     const startOfDay = new Date(today);
     startOfDay.setHours(0, 0, 0, 0);
 
-    // Step 2: Find the orders placed within that date range
     const getOrder = await orderModel.findAll({
       where: {
         createdAt: {
@@ -222,44 +222,39 @@ exports.fetchDailyBestSellsProduct = async (req, res, next) => {
           [Op.lte]: today,
         },
       },
-      include: [
-        // Assuming you have an association between orderModel and productModel
-        { model: productModel },
-      ],
     });
 
-    // Step 3: Group the orders by the product ID and calculate the total quantity sold for each product
-    const productQuantities = {};
+    // Create an object to keep track of the number of orders for each product
+    const productCounts = {};
+
     getOrder.forEach((order) => {
-      const productId = order.product.id;
-      const quantity = order.quantity;
-      if (productQuantities[productId]) {
-        productQuantities[productId] += quantity;
+      const productId = order.productId;
+      // Increment the count for the product
+      if (productCounts[productId]) {
+        productCounts[productId]++;
       } else {
-        productQuantities[productId] = quantity;
+        productCounts[productId] = 1;
       }
     });
+    const BestSellProduct = Object.keys(productCounts);
 
-    // Step 4: Identify the product with the highest quantity sold
-    let bestSellingProductId;
-    let highestQuantity = 0;
-    for (const productId in productQuantities) {
-      if (productQuantities[productId] > highestQuantity) {
-        highestQuantity = productQuantities[productId];
-        bestSellingProductId = productId;
-      }
+    let products = [];
+    for (const productId of BestSellProduct) {
+      const foundProduct = await productModel.findAll({
+        where: { id: productId },
+        attributes: { exclude: ["createdAt", "updatedAt", "status"] },
+      });
+      products.push(...foundProduct);
     }
-
-    // Step 5: Return the best-selling product
-    if (bestSellingProductId) {
-      const bestSellingProduct = await productModel.findByPk(
-        bestSellingProductId
-      );
-      res.send(bestSellingProduct);
-    } else {
-      res.send("No best-selling product found for today.");
+    if (products.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No best-selling product found for today",
+      });
     }
+    return res.status(200).json({ status: true, products });
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };

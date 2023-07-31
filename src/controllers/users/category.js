@@ -9,6 +9,7 @@ const {
   reviews_ratingModel,
 } = require("../../models/models");
 const { sequelize } = require("../../../config/database");
+const productCategory = require("../../models/product_category");
 
 exports.getCategory = async (req, res, next) => {
   try {
@@ -72,19 +73,21 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
 
     const whereCondition = {
       ...(name && { name: { [Op.like]: `%${name}%` } }),
-      ...(subcategory && { subcategory: { [Op.like]: `%${subcategory}%` } }),
+      ...(subcategory && {
+        "$subcategories.subcategory$": { [Op.like]: `%${subcategory}%` },
+      }),
       ...(brand && { brand: { [Op.like]: `%${brand}%` } }),
       ...(minPrice &&
         maxPrice && {
-          [Op.or]: [{ price: { [Op.between]: [minPrice, maxPrice] } }],
+          price: { [Op.between]: [minPrice, maxPrice] },
         }),
       ...(minPrice &&
         !maxPrice && {
-          [Op.or]: [{ price: { [Op.gte]: minPrice } }],
+          price: { [Op.gte]: minPrice },
         }),
       ...(maxPrice &&
         !minPrice && {
-          [Op.or]: [{ price: { [Op.lte]: maxPrice } }],
+          price: { [Op.lte]: maxPrice },
         }),
     };
     let order;
@@ -106,7 +109,9 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
     }
 
     const getProduct = await categoryModel.findOne({
-      where: { id: req.params.id },
+      where: {
+        id: req.params.id,
+      },
       attributes: { exclude: ["createdAt", "updatedAt"] },
       include: [
         {
@@ -120,6 +125,7 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
 
             {
               model: subcategoryModel,
+
               attributes: { exclude: ["createdAt", "updatedAt"] },
             },
             {
@@ -167,7 +173,7 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
     const totalPages = Math.ceil(totalCount / limit);
     res.status(200).json({
       success: true,
-      products: formattedProduct,
+      products: getProduct,
       totalPages,
       totalItems: totalCount,
       currentPage: page,
@@ -182,7 +188,6 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
 // fetchAllProductByCategoryId
 
 exports.fetchAllProductByCategoryId = async (req, res, next) => {
-  console.log(req.params.id);
   const idSchema = joi.object({
     id: joi.number().required(),
   });
@@ -234,18 +239,18 @@ exports.fetchAllProductByCategoryId = async (req, res, next) => {
         .json({ status: false, message: "Category not found" });
     }
 
-    const productIds = await categoryModel.findAll({
-      where: { id: category.id },
-      attributes: ["productId"], // Change the column name to "productId"
-      raw: true,
-    });
+    // const productIds = await categoryModel.findAll({
+    //   where: { id: category.id },
+    //   attributes: ["productId"], // Change the column name to "productId"
+    //   raw: true,
+    // });
 
-    const productIdsArray = productIds.map((item) => item.productId);
+    // const productIdsArray = productIds.map((item) => item.productId);
 
     const getProduct = await productModel.findAll({
       where: {
-        id: productIdsArray,
-        ...whereCondition,
+        // id: productIdsArray,
+        whereCondition,
       },
       attributes: { exclude: ["createdAt", "updatedAt"] },
       include: [
@@ -293,17 +298,14 @@ exports.fetchAllProductByCategoryId = async (req, res, next) => {
       product_images: product.product_images.map((image) => image.images),
     }));
 
-    const totalCount = await productModel.count({
-      where: {
-        id: productIdsArray,
-        ...whereCondition,
-      },
+    const totalCount = await productCategory.count({
+      where: { categoryId: req.params.id },
     });
     const totalPages = Math.ceil(totalCount / limit);
 
     res.status(200).json({
       success: true,
-      products: formattedProducts,
+      products: getProduct,
       totalPages,
       totalItems: totalCount,
       currentPage: page,
