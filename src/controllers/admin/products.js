@@ -210,10 +210,11 @@ exports.fetchAllProducts = async (req, res, next) => {
       offset: offset,
       limit: limit,
     });
+    console.log(products);
 
     const totalCount = await productModel.count();
 
-    if (products === 0) {
+    if (products.length === 0) {
       return res.status(404).json({
         status: false,
         message: "Product not found",

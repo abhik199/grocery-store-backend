@@ -59,5 +59,5 @@ card.belongsTo(user, {
   foreignKey: "userId",
 });
 
-card.sync({ alter: true });
+card.sync();
 module.exports = card;

@@ -43,8 +43,14 @@ routes.get("/order/:id", auth, userOrder.fetchOrderById);
 // testing routes
 routes.get("/test/:id", userCategory.fetchAllProductByCategoryId);
 
-// testing
-
+// verify transactions
 routes.post("/verify", auth, verifyTransaction);
+
+// product listing
+routes.get("/popular_product", userProduct.fetchAllPopularProduct);
+routes.get("/daily_sells", userProduct.fetchDailyBestSellsProduct);
+routes.get("/deals_of_day");
+// routes.get("/top_selling");    TODO  at this time i am not working
+// routes.get("recently_added");  TODO
 
 module.exports = routes;

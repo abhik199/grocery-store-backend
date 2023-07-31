@@ -1,4 +1,4 @@
-const { cardModel, productModel, userModel } = require("../../models/models");
+const { cardModel, productModel } = require("../../models/models");
 const joi = require("joi");
 
 exports.fetchCartByUser = async (req, res, next) => {
