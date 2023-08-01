@@ -6,7 +6,7 @@ const errorHandler = (error, req, res, next) => {
   let statusCode = 500;
   let data = {
     message: "Internal server error",
-    ...(env.DEBUG_MODE === true && { originalError: error }),
+    ...(env.DEBUG_MODE === true && { originalError: error.message }),
   };
   if (error instanceof ValidationError) {
     statusCode = 422;

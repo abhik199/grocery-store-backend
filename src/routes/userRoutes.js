@@ -21,9 +21,8 @@ routes.get("/subcategory", userSubCategory.fetchAllSubCategories);
 
 // user product
 
-routes.get("/product", userProduct.fetchAllPopularProduct); // i am using for testing
+routes.get("/product", userProduct.fetchAllPopularProduct);
 routes.get("/product/:id", userProduct.getSingleProduct);
-routes.get("/popular_product", userProduct.fetchAllPopularProduct);
 
 // card
 routes.post("/card", auth, userCard.addToCart);
@@ -39,9 +38,6 @@ routes.post("/order", auth, userOrder.createOrder);
 routes.get("/order", auth, userOrder.fetchAllOrderByUse);
 routes.patch("/order/:id/cancel", auth, userOrder.requestCancelOrder);
 routes.get("/order/:id", auth, userOrder.fetchOrderById);
-
-// testing routes
-routes.get("/test/:id", userCategory.fetchAllProductByCategoryId);
 
 // verify transactions
 routes.post("/verify", auth, verifyTransaction);

@@ -92,13 +92,11 @@ exports.createTransactions = async (req, res, next) => {
     for (const payment of getPayments) {
       const transactionId = payment.id;
 
-      // Check if the transaction with the same transaction_id already exists
       const existingTransaction = await transactionsModels.findOne({
         where: { transaction_id: transactionId },
       });
 
       if (existingTransaction) {
-        // Skip processing this payment as it's a duplicate
         continue;
       }
 
@@ -120,7 +118,6 @@ exports.createTransactions = async (req, res, next) => {
         transaction_id: transactionId,
       };
 
-      // Add the new transaction to the list to be inserted in the database
       newTransactions.push(newTransaction);
     }
 
@@ -128,7 +125,6 @@ exports.createTransactions = async (req, res, next) => {
       return false;
     }
 
-    // Bulk create the new transactions in the database
     const createdTransactions = await transactionsModels.bulkCreate(
       newTransactions
     );

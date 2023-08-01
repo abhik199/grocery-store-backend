@@ -153,7 +153,6 @@ exports.fetchAllPopularProduct = async (req, res, next) => {
         },
       };
     }
-    //
 
     if (filteredProducts.length > 0) {
       const popularProductsData = [];
@@ -211,6 +210,7 @@ exports.fetchAllPopularProduct = async (req, res, next) => {
 
 exports.fetchDailyBestSellsProduct = async (req, res, next) => {
   try {
+    const { subcategory } = req.query;
     const today = new Date();
     const startOfDay = new Date(today);
     startOfDay.setHours(0, 0, 0, 0);
@@ -224,37 +224,73 @@ exports.fetchDailyBestSellsProduct = async (req, res, next) => {
       },
     });
 
-    // Create an object to keep track of the number of orders for each product
-    const productCounts = {};
+    const productQuantities = {};
 
     getOrder.forEach((order) => {
-      const productId = order.productId;
-      // Increment the count for the product
-      if (productCounts[productId]) {
-        productCounts[productId]++;
+      const { productId, totalItems } = order;
+      // Increment the total quantity for the product
+      if (productQuantities[productId]) {
+        productQuantities[productId] += totalItems;
       } else {
-        productCounts[productId] = 1;
+        productQuantities[productId] = totalItems;
       }
     });
-    const BestSellProduct = Object.keys(productCounts);
 
-    let products = [];
-    for (const productId of BestSellProduct) {
-      const foundProduct = await productModel.findAll({
-        where: { id: productId },
-        attributes: { exclude: ["createdAt", "updatedAt", "status"] },
-      });
-      products.push(...foundProduct);
+    const bestSellProductIds = Object.keys(productQuantities);
+
+    let whereCondition;
+    if (subcategory === "all") {
+      whereCondition.all = "all";
+    } else {
+      whereCondition = {
+        "$subcategories.subcategory$": {
+          [Op.like]: `%${subcategory}%`,
+        },
+      };
     }
-    if (products.length === 0) {
+    res.json(whereCondition);
+
+    const products = await productModel.findAll({
+      where: {
+        id: bestSellProductIds,
+      },
+      attributes: { exclude: ["createdAt", "updatedAt", "status"] },
+      include: [
+        {
+          model: subcategoryModel,
+          where: whereCondition,
+          attributes: { exclude: ["createdAt", "updatedAt"] },
+        },
+        {
+          model: productImgModel,
+          attributes: { exclude: ["createdAt", "updatedAt"] },
+        },
+      ],
+    });
+
+    const productsWithStockAndSold = products.map((product) => {
+      const { id } = product;
+      const quantities = productQuantities[id] || 0;
+
+      return {
+        ...product.toJSON(),
+        stock: product.stock,
+        sold: quantities,
+      };
+    });
+
+    productsWithStockAndSold.sort((a, b) => b.sold - a.sold);
+
+    if (productsWithStockAndSold.length === 0) {
       return res.status(404).json({
         status: false,
         message: "No best-selling product found for today",
       });
     }
-    return res.status(200).json({ status: true, products });
+    return res
+      .status(200)
+      .json({ status: true, products: productsWithStockAndSold });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };

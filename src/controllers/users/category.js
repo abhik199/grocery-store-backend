@@ -69,43 +69,58 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
-    const { name, brand, subcategory, minPrice, maxPrice, sort } = req.query;
 
-    const whereCondition = {
-      ...(name && { name: { [Op.like]: `%${name}%` } }),
-      ...(subcategory && {
-        "$subcategories.subcategory$": { [Op.like]: `%${subcategory}%` },
-      }),
-      ...(brand && { brand: { [Op.like]: `%${brand}%` } }),
-      ...(minPrice &&
-        maxPrice && {
-          price: { [Op.between]: [minPrice, maxPrice] },
-        }),
-      ...(minPrice &&
-        !maxPrice && {
-          price: { [Op.gte]: minPrice },
-        }),
-      ...(maxPrice &&
-        !minPrice && {
-          price: { [Op.lte]: maxPrice },
-        }),
-    };
-    let order;
-    if (sort === "low_to_high") {
-      order = [["price", "ASC"]];
-    } else if (sort === "high_to_low") {
-      order = [["price", "DESC"]];
-    } else {
-      order = [["createdAt", "DESC"]];
+    const { name, brand, subcategory, minPrice, maxPrice, sort } = req.query;
+    const whereCondition = {};
+
+    let orderField, orderDirection;
+    switch (sort) {
+      case "popularity":
+        orderField = "popularity";
+        break;
+      case "latest":
+        orderField = "createdAt";
+        orderDirection = "DESC";
+        break;
+      case "low_to_high":
+        orderField = "price";
+        orderDirection = "ASC";
+        break;
+      case "high_to_low":
+        orderField = "price";
+        orderDirection = "DESC";
+        break;
+      default:
+        orderField = "createdAt";
+        orderDirection = "DESC";
+        break;
     }
 
-    let orderBy;
-    if (sort === "low_to_high") {
-      orderBy = [["price", "ASC"]];
-    } else if (sort === "high_to_low") {
-      orderBy = [["price", "DESC"]];
-    } else {
-      orderBy = [["createdAt", "DESC"]];
+    // Add filters to the whereCondition object
+    if (name) {
+      whereCondition.name = name;
+    }
+
+    if (brand) {
+      whereCondition.brand = brand;
+    }
+
+    if (subcategory) {
+      whereCondition["$subcategories.subcategory$"] = subcategory;
+    }
+
+    if (minPrice && !isNaN(minPrice)) {
+      if (!whereCondition.price) {
+        whereCondition.price = {};
+      }
+      whereCondition.price.$gte = Number(minPrice);
+    }
+
+    if (maxPrice && !isNaN(maxPrice)) {
+      if (!whereCondition.price) {
+        whereCondition.price = {};
+      }
+      whereCondition.price.$lte = Number(maxPrice);
     }
 
     const getProduct = await categoryModel.findOne({
@@ -117,34 +132,30 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
         {
           model: productModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },
+          where: whereCondition, // Apply filtering based on search criteria
           include: [
             {
               model: productImgModel,
               attributes: { exclude: ["createdAt", "updatedAt"] },
             },
-
             {
               model: subcategoryModel,
-
               attributes: { exclude: ["createdAt", "updatedAt"] },
-            },
-            {
-              model: reviews_ratingModel,
-              attributes: { exclude: ["createdAt", "updatedAt"] },
-              as: "review",
+              as: "subcategories",
             },
           ],
+          order: [[orderField, orderDirection]], // Apply sorting based on 'sort' parameter
         },
       ],
     });
+
+    return res.json(getProduct);
 
     if (!getProduct || Object.keys(getProduct).length === 0) {
       return res
         .status(404)
         .json({ status: false, message: "Product not found" });
     }
-
-    // This code is not using at time using fronted side
     const formattedProduct = getProduct.products.map((product) => ({
       id: product.id,
       name: product.name,
@@ -179,138 +190,7 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
       currentPage: page,
     });
   } catch (error) {
-    return next(error);
-  }
-};
-
-// Implement  Search app
-// for testing Code
-// fetchAllProductByCategoryId
-
-exports.fetchAllProductByCategoryId = async (req, res, next) => {
-  const idSchema = joi.object({
-    id: joi.number().required(),
-  });
-  const { error } = idSchema.validate(req.params);
-  if (error) {
-    return next(error);
-  }
-
-  try {
-    const categoryId = await categoryModel.findOne({
-      where: { id: req.params.id },
-    });
-    if (!categoryId) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Category ID is incorrect" });
-    }
-
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 5;
-    const offset = (page - 1) * limit;
-    const { name, brand, subcategory, minPrice, maxPrice, sort } = req.query;
-
-    const whereCondition = {
-      ...(name && { name: { [Op.like]: `%${name}%` } }),
-      ...(subcategory && { subcategory: { [Op.like]: `%${subcategory}%` } }),
-      ...(brand && { brand: { [Op.like]: `%${brand}%` } }),
-      ...(minPrice && { price: { [Op.gte]: minPrice } }),
-      ...(maxPrice && { price: { [Op.lte]: maxPrice } }),
-    };
-
-    let orderBy;
-    if (sort === "low_to_high") {
-      orderBy = [["price", "ASC"]];
-    } else if (sort === "high_to_low") {
-      orderBy = [["price", "DESC"]];
-    } else {
-      orderBy = [["createdAt", "DESC"]];
-    }
-
-    const category = await categoryModel.findOne({
-      where: { id: req.params.id },
-      attributes: { exclude: ["createdAt", "updatedAt"] },
-    });
-
-    if (!category) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Category not found" });
-    }
-
-    // const productIds = await categoryModel.findAll({
-    //   where: { id: category.id },
-    //   attributes: ["productId"], // Change the column name to "productId"
-    //   raw: true,
-    // });
-
-    // const productIdsArray = productIds.map((item) => item.productId);
-
-    const getProduct = await productModel.findAll({
-      where: {
-        // id: productIdsArray,
-        whereCondition,
-      },
-      attributes: { exclude: ["createdAt", "updatedAt"] },
-      include: [
-        {
-          model: productImgModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
-        },
-        {
-          model: subcategoryModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
-        },
-        {
-          model: reviews_ratingModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
-          as: "review",
-        },
-      ],
-      order: orderBy,
-      offset,
-      limit,
-    });
-
-    if (!getProduct || getProduct.length === 0) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Products not found" });
-    }
-
-    const formattedProducts = getProduct.map((product) => ({
-      id: product.id,
-      name: product.name,
-      brand: product.brand,
-      price: product.price,
-      discount_price: product.discount_price,
-      discount_percentage: product.discount_percentage,
-      tag: product.tag,
-      stock: product.stock,
-      thumbnail: product.thumbnail,
-      description: product.description,
-      subcategory: product.subcategories.map((subcategory) => ({
-        id: subcategory.id,
-        name: subcategory.subcategory,
-      })),
-      category: category.name,
-      product_images: product.product_images.map((image) => image.images),
-    }));
-
-    const totalCount = await productCategory.count({
-      where: { categoryId: req.params.id },
-    });
-    const totalPages = Math.ceil(totalCount / limit);
-
-    res.status(200).json({
-      success: true,
-      products: getProduct,
-      totalPages,
-      totalItems: totalCount,
-      currentPage: page,
-    });
-  } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
