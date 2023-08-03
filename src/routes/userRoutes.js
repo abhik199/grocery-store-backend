@@ -21,7 +21,7 @@ routes.get("/subcategory", userSubCategory.fetchAllSubCategories);
 
 // user product
 
-routes.get("/product", userProduct.fetchAllPopularProduct);
+routes.get("/product", userProduct.fetchAllHotDealProduct);
 routes.get("/product/:id", userProduct.getSingleProduct);
 
 // card

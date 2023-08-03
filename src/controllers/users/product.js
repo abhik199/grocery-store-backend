@@ -22,37 +22,46 @@ reviews_ratingModel.belongsTo(productModel, {
   as: "review",
 });
 
-exports.getProduct = async (req, res, next) => {
+exports.fetchAllHotDealProduct = async (req, res, next) => {
   try {
-    const { category } = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 12;
+    const offset = page - 1;
 
-    const whereCondition = {};
+    const { subcategory, name } = req.query;
+
+    let whereCondition = {};
+
+    if (name) {
+      whereCondition.name = { [Op.like]: `%${name}%` };
+    }
 
     const { count, rows: products } = await productModel.findAndCountAll({
       attributes: {
-        exclude: [
-          "createdAt",
-          "updatedAt",
-          "stock",
-          "description",
-          "discount_percentage",
-        ],
+        exclude: ["createdAt", "updatedAt"],
       },
       include: [
+        {
+          model: subcategoryModel,
+          where: {
+            subcategory: {
+              [Op.like]: `%${subcategory}%`,
+            },
+          },
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+        },
         {
           model: productImgModel,
           attributes: {
             exclude: ["createdAt", "updatedAt"],
           },
         },
-        {
-          model: subcategoryModel,
-          attributes: {
-            exclude: ["createdAt", "updatedAt"],
-          },
-        },
       ],
-      limit: 10,
+
+      offset: offset,
+      limit: limit,
     });
 
     if (count === 0) {
@@ -63,22 +72,27 @@ exports.getProduct = async (req, res, next) => {
     }
     const modifiedProduct = products.map((product) => ({
       id: product.id,
-      title: product.name,
-      brand: product.brand,
+      name: product.name,
       price: product.price,
+      brand: product.brand,
       discount_price: product.discount_price,
+      discount_percentage: product.discount_percentage,
       tag: product.tag,
+      stock: product.stock,
+      description: product.description,
+
       subcategory: product.subcategories.map(
         (subcategory) => subcategory.subcategory
       ),
-      image: product.product_images.map((image) => image.images).slice(0, 2),
+      image: product.product_images.map((image) => image.images),
     }));
 
     return res.status(200).json({
       status: true,
-      data: modifiedProduct,
+      products: products,
     });
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
@@ -210,6 +224,10 @@ exports.fetchAllPopularProduct = async (req, res, next) => {
 
 exports.fetchDailyBestSellsProduct = async (req, res, next) => {
   try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 4;
+    const offset = (page - 1) * limit;
+
     const { subcategory } = req.query;
     const today = new Date();
     const startOfDay = new Date(today);
@@ -239,15 +257,23 @@ exports.fetchDailyBestSellsProduct = async (req, res, next) => {
     const bestSellProductIds = Object.keys(productQuantities);
 
     let whereCondition;
-    if (subcategory === "all") {
-      whereCondition.all = "all";
-    } else {
+    // if (subcategory === "all") {
+    //   whereCondition.all = "all";
+    // } else {
+    //   whereCondition = {
+    //     "$subcategories.subcategory$": {
+    //       [Op.like]: `%${subcategory}%`,
+    //     },
+    //   };
+    // }
+    if (subcategory) {
       whereCondition = {
         "$subcategories.subcategory$": {
           [Op.like]: `%${subcategory}%`,
         },
       };
     }
+
     res.json(whereCondition);
 
     const products = await productModel.findAll({
@@ -258,7 +284,7 @@ exports.fetchDailyBestSellsProduct = async (req, res, next) => {
       include: [
         {
           model: subcategoryModel,
-          where: whereCondition,
+
           attributes: { exclude: ["createdAt", "updatedAt"] },
         },
         {
