@@ -22,11 +22,13 @@ reviews_ratingModel.belongsTo(productModel, {
   as: "review",
 });
 
+// Assuming you have imported the required models and Sequelize (Op) properly.
+
 exports.fetchAllHotDealProduct = async (req, res, next) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 12;
-    const offset = page - 1;
+    const offset = (page - 1) * limit;
 
     const { subcategory, name } = req.query;
 
@@ -40,14 +42,10 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
       attributes: {
         exclude: ["createdAt", "updatedAt"],
       },
+      where: whereCondition,
       include: [
         {
           model: subcategoryModel,
-          where: {
-            subcategory: {
-              [Op.like]: `%${subcategory}%`,
-            },
-          },
           attributes: {
             exclude: ["createdAt", "updatedAt"],
           },
@@ -59,7 +57,6 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
           },
         },
       ],
-
       offset: offset,
       limit: limit,
     });
@@ -70,6 +67,48 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
         message: "Product not found",
       });
     }
+    const totalCount = await productModel.count({
+      where: whereCondition,
+    });
+    const totalPages = Math.ceil(totalCount / limit);
+
+    if (subcategory) {
+      const filteredProducts = products.filter((product) =>
+        product.subcategories.some((sub) => sub.subcategory === subcategory)
+      );
+
+      const modifiedProduct = filteredProducts.map((product) => ({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        brand: product.brand,
+        discount_price: product.discount_price,
+        discount_percentage: product.discount_percentage,
+        tag: product.tag,
+        stock: product.stock,
+        description: product.description,
+        subcategory: product.subcategories.map(
+          (subcategory) => subcategory.subcategory
+        ),
+        image: product.product_images.map((image) => image.images),
+      }));
+      if (modifiedProduct.length === 0) {
+        return res.status(404).json({
+          status: false,
+          message: "Product not found",
+        });
+      }
+      const totalCount = modifiedProduct.length;
+      const totalPages = Math.ceil(totalCount / limit);
+      return res.status(200).json({
+        status: true,
+        products: modifiedProduct,
+        totalPages,
+        totalItems: totalCount,
+        currentPage: page,
+      });
+    }
+
     const modifiedProduct = products.map((product) => ({
       id: product.id,
       name: product.name,
@@ -80,7 +119,6 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
       tag: product.tag,
       stock: product.stock,
       description: product.description,
-
       subcategory: product.subcategories.map(
         (subcategory) => subcategory.subcategory
       ),
@@ -89,7 +127,10 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
 
     return res.status(200).json({
       status: true,
-      products: products,
+      products: modifiedProduct,
+      totalPages,
+      totalItems: totalCount,
+      currentPage: page,
     });
   } catch (error) {
     console.log(error);
@@ -255,27 +296,6 @@ exports.fetchDailyBestSellsProduct = async (req, res, next) => {
     });
 
     const bestSellProductIds = Object.keys(productQuantities);
-
-    let whereCondition;
-    // if (subcategory === "all") {
-    //   whereCondition.all = "all";
-    // } else {
-    //   whereCondition = {
-    //     "$subcategories.subcategory$": {
-    //       [Op.like]: `%${subcategory}%`,
-    //     },
-    //   };
-    // }
-    if (subcategory) {
-      whereCondition = {
-        "$subcategories.subcategory$": {
-          [Op.like]: `%${subcategory}%`,
-        },
-      };
-    }
-
-    res.json(whereCondition);
-
     const products = await productModel.findAll({
       where: {
         id: bestSellProductIds,
@@ -304,18 +324,67 @@ exports.fetchDailyBestSellsProduct = async (req, res, next) => {
         sold: quantities,
       };
     });
+    // return res.json(productsWithStockAndSold);
 
     productsWithStockAndSold.sort((a, b) => b.sold - a.sold);
+    function callProduct() {
+      return (modifiedProduct = productsWithStockAndSold.map((product) => ({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        discount_price: product.discount_price,
+        discount_percentage: product.discount_percentage,
+        subcategory: product.subcategories.map(
+          (subcategory) => subcategory.subcategory
+        ),
+        images: product.product_images.slice(0, 2).map((image) => image.images),
+        sold: `${product.sold}/${product.stock}`,
+      })));
+    }
 
-    if (productsWithStockAndSold.length === 0) {
+    // if user select sub sub category === all then  work this sections
+    if (subcategory === "all") {
+      const newProduct = await callProduct();
+      if (newProduct.length === 0) {
+        return res.status(404).json({
+          status: false,
+          message: "No best-selling product found for today",
+        });
+      }
+      return res.status(200).json({ status: true, products: newProduct });
+    }
+    // if user select  sub category like sea food  sub category name work this sections
+    if (subcategory) {
+      const products = await callProduct();
+      if (products.length === 0) {
+        return res.status(404).json({
+          status: false,
+          message: "No best-selling product found for today",
+        });
+      }
+
+      const filteredProducts = products.filter((product) =>
+        product.subcategory.includes(subcategory)
+      );
+      if (filteredProducts.length === 0) {
+        return res.status(404).json({
+          status: false,
+          message: "No products found for the selected subcategory",
+        });
+      }
+      // TODO List Sidler integrated tomorrow
+
+      return res.status(200).json({ status: true, products: filteredProducts });
+    }
+
+    const newProduct = await callProduct();
+    if (newProduct.length === 0) {
       return res.status(404).json({
         status: false,
         message: "No best-selling product found for today",
       });
     }
-    return res
-      .status(200)
-      .json({ status: true, products: productsWithStockAndSold });
+    return res.status(200).json({ status: true, products: newProduct });
   } catch (error) {
     return next(error);
   }
@@ -352,7 +421,63 @@ exports.fetchAllTrendingProduct = async (req, res, next) => {
 
 exports.fetchAllRecentlyAddedProduct = async (req, res, next) => {
   try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 12;
+    const offset = (page - 1) * limit;
+    let whereCondition = {};
+
+    whereCondition.createdAt = { [Op.lt]: new Date() };
+
+    const { count, rows: products } = await productModel.findAndCountAll({
+      attributes: {
+        exclude: ["updatedAt"],
+      },
+      where: whereCondition,
+      include: [
+        {
+          model: subcategoryModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+        },
+        {
+          model: productImgModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+        },
+      ],
+      offset: offset,
+      limit: limit,
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (count === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No recently added products found",
+      });
+    }
+
+    const modifiedProduct = products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      discount_price: product.discount_price,
+      discount_percentage: product.discount_percentage,
+
+      // subcategory: product.subcategories.map(
+      //   (subcategory) => subcategory.subcategory
+      // ),
+      image: product.product_images[0]?.images,
+    }));
+
+    return res.status(200).json({
+      status: true,
+      products: modifiedProduct,
+    });
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };

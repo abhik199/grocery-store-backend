@@ -47,6 +47,6 @@ routes.get("/popular_product", userProduct.fetchAllPopularProduct);
 routes.get("/daily_sells", userProduct.fetchDailyBestSellsProduct);
 routes.get("/deals_of_day");
 // routes.get("/top_selling");    TODO  at this time i am not working
-// routes.get("recently_added");  TODO
+routes.get("/recently", userProduct.fetchAllRecentlyAddedProduct);
 
 module.exports = routes;

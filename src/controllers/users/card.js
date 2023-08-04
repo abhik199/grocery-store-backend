@@ -43,7 +43,8 @@ exports.addToCart = async (req, res, next) => {
   }
 
   const { productId, quantity } = req.body;
-  if (!quantity) {
+
+  if (quantity) {
     return res
       .status(400)
       .json({ status: false, message: "quantity required" });

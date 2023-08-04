@@ -126,7 +126,7 @@ exports.createProducts = async (req, res, next) => {
           }
           await productModel.update(
             {
-              thumbnail: productImages[0],
+              thumbnail: productImages[(0, 1)],
             },
             { where: { id: product.id }, returning: true }
           );
