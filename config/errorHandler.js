@@ -1,12 +1,11 @@
 const customErrorHandler = require("./customErrorHandler");
-require("dotenv").config();
-const env = require("./env/development");
+const { DEBUG_MODE } = require("./config");
 const { ValidationError } = require("joi");
 const errorHandler = (error, req, res, next) => {
   let statusCode = 500;
   let data = {
     message: "Internal server error",
-    ...(env.DEBUG_MODE === true && { originalError: error.message }),
+    ...(DEBUG_MODE === true && { originalError: error.message }),
   };
   if (error instanceof ValidationError) {
     statusCode = 422;

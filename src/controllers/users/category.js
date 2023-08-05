@@ -1,15 +1,15 @@
 const { Op, Sequelize } = require("sequelize");
 const joi = require("joi");
-const env = require("../../../config/env/development");
+
 const {
   categoryModel,
   productModel,
   productImgModel,
   subcategoryModel,
   reviews_ratingModel,
+  productCategoryModels,
 } = require("../../models/models");
 const { sequelize } = require("../../../config/database");
-const productCategory = require("../../models/product_category");
 
 exports.getCategory = async (req, res, next) => {
   try {
@@ -95,6 +95,7 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
         orderDirection = "DESC";
         break;
     }
+    return;
 
     // Add filters to the whereCondition object
     if (name) {
@@ -149,8 +150,6 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
       ],
     });
 
-    return res.json(getProduct);
-
     if (!getProduct || Object.keys(getProduct).length === 0) {
       return res
         .status(404)
@@ -180,11 +179,13 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
         .status(404)
         .json({ status: false, message: "product not found" });
     }
-    const totalCount = await productModel.count();
+    const totalCount = await productCategoryModels.count({
+      where: { categoryId: req.params.id },
+    });
     const totalPages = Math.ceil(totalCount / limit);
     res.status(200).json({
       success: true,
-      products: getProduct,
+      products: formattedProduct,
       totalPages,
       totalItems: totalCount,
       currentPage: page,

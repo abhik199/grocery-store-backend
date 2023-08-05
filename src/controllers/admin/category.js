@@ -15,7 +15,7 @@ const joi = require("joi");
 
 // imageDelete Functions
 function imageDelete(image_url) {
-  const folderPath = path.join(process.cwd(), "public/category");
+  const folderPath = path.join(__dirname, "public/category");
   const filePath = path.join(folderPath, image_url);
   fs.unlink(filePath, (error) => {
     if (error) {
@@ -123,7 +123,7 @@ exports.updateCategory = async (req, res, next) => {
 
         res.status(200).json({ status: true, message: "Update successfully" });
       } catch (error) {
-        const folderPath = path.join(process.cwd(), "public/category");
+        const folderPath = path.join(__dirname, "public/category");
         const filePath = path.join(folderPath, image_url);
         fs.unlink(filePath, (error) => {
           if (error) {
@@ -303,7 +303,7 @@ exports.deleteCategory = async (req, res, next) => {
       const fileNames = productImages.map((imageUrl) => {
         return imageUrl;
       });
-      const folderPath = path.join(process.cwd(), "public/product"); // Adjust
+      const folderPath = path.join(__dirname, "public/product"); // Adjust
 
       fileNames.forEach((fileName) => {
         const filePath = path.join(folderPath, fileName);
@@ -356,7 +356,7 @@ exports.deleteCategory = async (req, res, next) => {
       const fileName = subcategoryImages.map((imageUrl) => {
         return imageUrl;
       });
-      const fol_path = path.join(process.cwd(), "public/subcategory"); // Adjust
+      const fol_path = path.join(__dirname, "public/subcategory"); // Adjust
 
       fileNames.forEach((fileName) => {
         const filePath = path.join(fol_path, fileName);
@@ -371,7 +371,7 @@ exports.deleteCategory = async (req, res, next) => {
 
       // delete category images and data in database
 
-      // const folder_path = path.join(process.cwd(), "public/category");
+      // const folder_path = path.join(__dirname, "public/category");
 
       const delete_category = await categoryModel.destroy({
         where: { id: req.params.id },

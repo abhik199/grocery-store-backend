@@ -1,10 +1,9 @@
-require("dotenv").config();
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const path = require("path");
 const ejs = require("ejs");
-const Url = process.env.url;
+const { url, email, password } = require("../../config/config");
 
 const { userModel, forgotPasswordModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
@@ -24,14 +23,14 @@ const Forgot = async (name, email, key) => {
       secure: false,
       requireTLS: true,
       auth: {
-        user: process.env.email,
-        pass: process.env.password,
+        user: email,
+        pass: password,
       },
     });
-    const resetPasswordLink = `${Url}/auth/forgot_password?key=${key}&email=${email}`;
+    const resetPasswordLink = `${url}/auth/forgot_password?key=${key}&email=${email}`;
 
     ejs.renderFile(
-      path.join(process.cwd(), "views/forgot.ejs"),
+      path.join(__dirname, "views/forgot.ejs"),
       { resetPasswordLink, name },
       (err, data) => {
         if (err) {

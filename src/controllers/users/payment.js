@@ -1,5 +1,5 @@
 const Razorpay = require("razorpay");
-const { key_id, Key_Secret } = require("../../../config/env/development");
+const { key_id, Key_Secret } = require("../../../config/config");
 const crypto = require("crypto");
 const { cardModel } = require("../../models/models");
 const { createTransactions } = require("../admin/transactions");

@@ -1,4 +1,3 @@
-require("dotenv").config();
 const { DataTypes } = require("sequelize");
 const ejs = require("ejs");
 const bcrypt = require("bcrypt");
@@ -6,7 +5,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
-const Url = process.env.url;
+const config = require("../../config/config");
 
 const { userModel, addressesModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
@@ -24,13 +23,13 @@ const signup = async (name, email, verification_token) => {
       secure: false,
       requireTLS: true,
       auth: {
-        user: process.env.email,
-        pass: process.env.password,
+        user: config.email,
+        pass: config.password,
       },
     });
-    const email_url = `${Url}/auth/verify_email?verificationToken=${verification_token}&email=${email}`;
+    const email_url = `${config.url}/auth/verify_email?verificationToken=${verification_token}&email=${email}`;
     ejs.renderFile(
-      path.join(process.cwd(), "views/email.ejs"),
+      path.join(__dirname, "views/email.ejs"),
       { email_url, name },
       (err, data) => {
         if (err) {
@@ -70,7 +69,7 @@ exports.userRegistration = async (req, res, next) => {
 
     if (users) {
       if (req.file !== undefined) {
-        const folderPath = path.join(process.cwd(), "public/profile");
+        const folderPath = path.join(__dirname, "public/profile");
         const filePath = path.join(folderPath, req.file.filename);
         fs.unlink(filePath, (error) => {
           if (error) {
@@ -116,7 +115,8 @@ exports.userRegistration = async (req, res, next) => {
           { where: { id: createUser.id }, returning: true }
         );
       } catch (error) {
-        const folderPath = path.join(process.cwd(), "public/profile");
+        const folderPath = path.join(__dirname, "public/profile");
+
         const filePath = path.join(folderPath, imageUrl);
         fs.unlink(filePath, (error) => {
           if (error) {

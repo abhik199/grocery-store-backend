@@ -134,7 +134,7 @@ exports.createProducts = async (req, res, next) => {
           const fileNames = imageFiles.map((img) => {
             return img;
           });
-          const folderPath = path.join(process.cwd(), "public/product");
+          const folderPath = path.join(__dirname, "public/product");
           fileNames.forEach((fileName) => {
             const filePath = path.join(folderPath, fileName);
             fs.unlink(filePath, (error) => {
@@ -376,7 +376,7 @@ exports.deleteProduct = async (req, res, next) => {
       return img.images;
     });
     console.log(fileNames);
-    const folderPath = path.join(process.cwd(), "public/product");
+    const folderPath = path.join(__dirname, "public/product");
     fileNames.forEach((fileName) => {
       const filePath = path.join(folderPath, fileName);
       fs.unlink(filePath, (error) => {
@@ -486,7 +486,7 @@ exports.deleteImage = async (req, res, next) => {
       return imageUrl;
     });
     console.log(fileNames);
-    const folderPath = path.join(process.cwd(), "public/product"); // Adjust
+    const folderPath = path.join(__dirname, "public/product"); // Adjust
 
     fileNames.forEach((fileName) => {
       const filePath = path.join(folderPath, fileName);
@@ -537,7 +537,7 @@ exports.updateImage = async (req, res, next) => {
       console.log(image_id);
       if (!image_id) {
         res.status(400).json({ status: false, message: "image not found" });
-        const folderPath = path.join(process.cwd(), "public/product");
+        const folderPath = path.join(__dirname, "public/product");
 
         const filePath = path.join(folderPath, req.file.filename);
         fs.unlink(filePath, (error) => {
@@ -548,7 +548,7 @@ exports.updateImage = async (req, res, next) => {
         return;
       }
       // delete image in locally
-      const folderPath = path.join(process.cwd(), "public/product");
+      const folderPath = path.join(__dirname, "public/product");
 
       const filePath = path.join(folderPath, image_id.images);
       fs.unlink(filePath, (error) => {
@@ -574,7 +574,7 @@ exports.updateImage = async (req, res, next) => {
     }
     return res.status(200).json({ message: "please select product image" });
   } catch (error) {
-    const folderPath = path.join(process.cwd(), "public/product");
+    const folderPath = path.join(__dirname, "public/product");
 
     const filePath = path.join(folderPath, req.file.filename);
     fs.unlink(filePath, (error) => {

@@ -32,7 +32,7 @@ exports.userUpdate = async (req, res, next) => {
         const { profile } = await userModel.findOne({
           where: { id: userId.id },
         });
-        const folderPath = path.join(process.cwd(), "public/profile");
+        const folderPath = path.join(__dirname, "public/profile");
         const filePath = path.join(folderPath, profile);
         fs.unlink(filePath, (error) => {
           if (error) {
@@ -43,7 +43,7 @@ exports.userUpdate = async (req, res, next) => {
         updateFields.profile = req.file.filename;
       } catch (error) {
         // remove image error accrued code
-        const folderPath = path.join(process.cwd(), "public/profile");
+        const folderPath = path.join(__dirname, "public/profile");
         const filePath = path.join(folderPath, req.file.filename);
         fs.unlink(filePath, (error) => {
           if (error) {

@@ -1,7 +1,7 @@
-require("dotenv").config();
 const verifyRefreshToken = require("../utils/verifyRefreshToken");
 const jwt = require("jsonwebtoken");
 const { refreshTokenModel } = require("../models/models");
+const { JWT_SECRET } = require("../../config/config");
 
 exports.refreshToken = async (req, res, next) => {
   const { refreshToken } = req.body;
@@ -20,7 +20,7 @@ exports.refreshToken = async (req, res, next) => {
         role: tokenDetails.role,
         email: tokenDetails.email,
       };
-      const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      const accessToken = jwt.sign(payload, JWT_SECRET, {
         expiresIn: "14m",
       });
       res.status(200).json({

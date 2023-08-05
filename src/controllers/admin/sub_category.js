@@ -88,7 +88,7 @@ exports.createSubcategory = async (req, res, next) => {
           }
         );
       } catch (error) {
-        const folderPath = path.join(process.cwd(), "public/subcategory");
+        const folderPath = path.join(__dirname, "public/subcategory");
         const filePath = path.join(folderPath, image_url);
         fs.unlink(filePath, (error) => {
           if (error) {

@@ -1,5 +1,5 @@
 const { default: axios } = require("axios");
-const { key_id, Key_Secret } = require("../../../config/env/development");
+const { key_id, Key_Secret } = require("../../../config/config");
 const { transactionsModels } = require("../../models/models");
 
 exports.fetchAllTransactionsByAdmin = async (req, res, next) => {
