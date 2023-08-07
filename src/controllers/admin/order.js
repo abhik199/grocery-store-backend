@@ -75,23 +75,47 @@ exports.updateOrderStatus = async (req, res, next) => {
         .json({ status: false, message: "Status is required" });
     }
 
-    const [rowsAffected, updatedOrders] = await orderModel.update(
+    const orderStatusUpdate = await orderModel.update(
       { status: status },
       { where: { id: id }, returning: true }
     );
 
-    if (rowsAffected > 0) {
-      return res.status(200).json({
-        status: true,
-        message: "Status update successful",
-        updatedOrders,
-      });
-    } else {
+    if (!orderStatusUpdate) {
       return res.status(400).json({
         status: false,
         message: "Status update failed. Order not found.",
       });
     }
+    const productId = await orderModel.findOne({
+      where: { id: id },
+    });
+    console.log(productId.productId);
+    const countProduct = await orderModel.findAll({
+      where: {
+        productId: productId.productId,
+        status: "Delivered",
+      },
+    });
+
+    const totalItems = countProduct.reduce(
+      (total, card) => total + card.totalItems,
+      0
+    );
+    // update product stock
+    const productStock = await productModel.findOne({
+      where: { id: productId.productId },
+    });
+    await productModel.update(
+      {
+        stock: productStock.stock - totalItems,
+      },
+      { where: { id: productId.productId }, returning: true }
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "Status update successful",
+    });
   } catch (error) {
     return next(error);
   }

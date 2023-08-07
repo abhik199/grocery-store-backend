@@ -34,8 +34,8 @@ exports.fetchCartByUser = async (req, res, next) => {
 exports.addToCart = async (req, res, next) => {
   const { id: userId } = req.user;
   const cardSchema = joi.object({
-    quantity: joi.number().required(),
     productId: joi.number().required(),
+    quantity: joi.number().optional(),
   });
   const { error } = cardSchema.validate(req.body);
   if (error) {
@@ -44,13 +44,12 @@ exports.addToCart = async (req, res, next) => {
 
   const { productId, quantity } = req.body;
 
-  if (quantity) {
+  const q = quantity ?? 1; // Use the provided quantity or default to 1
+
+  if (!productId) {
     return res
       .status(400)
-      .json({ status: false, message: "quantity required" });
-  }
-  if (!productId) {
-    return res.status({ status: false, message: "product id required" });
+      .json({ status: false, message: "product id required" });
   }
 
   try {
@@ -64,7 +63,7 @@ exports.addToCart = async (req, res, next) => {
         .json({ status: false, message: "Product ID wrong" });
     }
 
-    if (!(quantity <= find_productId.stock)) {
+    if (!(q <= find_productId.stock)) {
       return res.status(400).json({
         message: "Insufficient stock",
         available_Stock: find_productId.stock,
@@ -75,16 +74,18 @@ exports.addToCart = async (req, res, next) => {
     const existingCartItem = user.find((item) => item.productId === productId);
 
     if (existingCartItem) {
-      const updatedQuantity = existingCartItem.quantity + quantity;
+      const updatedQuantity = existingCartItem.quantity + q;
       const updatedSubtotal = find_productId.price * updatedQuantity;
 
       const updateResult = await cardModel.update(
-        { quantity: updatedQuantity, subtotal: updatedSubtotal },
+        { quantity: q, subtotal: find_productId.discount_price * q },
         { where: { id: existingCartItem.id }, returning: true }
       );
 
-      if (updateResult[0] > 0) {
-        await update_Stock(find_productId, quantity);
+      if (updateResult) {
+        // after delivered product then update product
+        // await update_Stock(find_productId, q);
+
         return res
           .status(200)
           .json({ status: true, message: "Card updated successfully" });
@@ -98,8 +99,8 @@ exports.addToCart = async (req, res, next) => {
         name: find_productId.name,
         thumbnail: find_productId.thumbnail,
         discount_price: find_productId.discount_price,
-        quantity: req.body.quantity,
-        subtotal: find_productId.discount_price * quantity,
+        quantity: q,
+        subtotal: find_productId.discount_price * q,
         productId: productId,
         userId: userId,
       });
@@ -109,8 +110,8 @@ exports.addToCart = async (req, res, next) => {
           .status(400)
           .json({ status: false, message: "Failed to create card" });
       }
-
-      await update_Stock(find_productId, quantity);
+      // after delivered product then update product
+      // await update_Stock(find_productId, q);
 
       return res
         .status(201)

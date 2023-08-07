@@ -95,7 +95,6 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
         orderDirection = "DESC";
         break;
     }
-    return;
 
     // Add filters to the whereCondition object
     if (name) {
