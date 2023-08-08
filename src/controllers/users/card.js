@@ -132,6 +132,7 @@ exports.addToCart = async (req, res, next) => {
   }
 };
 
+// Delete Card Items
 exports.deleteFromCart = async (req, res, next) => {
   const { id } = req.params;
   try {
@@ -140,48 +141,62 @@ exports.deleteFromCart = async (req, res, next) => {
       return res.status(400).json({ status: false, message: "card not found" });
     }
     const delete_item = await cardModel.destroy({ where: { id: card.id } });
-    if (!delete_item) {
-      return res.status(400).json({ status: false, message: "delete failed" });
+    if (delete_item === 1) {
+      return res
+        .status(200)
+        .json({ status: true, message: 'Cart item deleted successfully"' });
     }
-    return res
-      .status(200)
-      .json({ status: true, message: 'Cart item deleted successfully"' });
+    return res.status(400).json({ status: false, message: "delete failed" });
   } catch (error) {
     return next(error);
   }
 };
 
+// Update Card Quantity
 exports.updateCart = async (req, res, next) => {
   const { id } = req.params;
   if (!id) {
-    return res.status(400).json({ status: false, message: "" });
+    return res.status(400).json({ status: false, message: "card id required" });
   }
   try {
-    const [rowsUpdated, [updatedCart]] = await cardModel.update(req.body, {
-      where: { id: id },
-      returning: true,
+    const price = await cardModel.findOne({ where: { id: id } });
+    if (!price) {
+      return res.status(400).json({ status: false, message: "Card it wrong" });
+    }
+    const product = await productModel.findOne({
+      where: { id: price.productId },
     });
 
-    if (rowsUpdated === 0) {
+    if (!(req.body.quantity > 0)) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Quantity must be greater than 0" });
+    }
+
+    if (!(req.body.quantity <= product.stock)) {
+      return res.status(400).json({
+        message: "Insufficient stock",
+        available_Stock: product.stock,
+      });
+    }
+
+    const updatedCart = await cardModel.update(
+      {
+        quantity: req.body.quantity,
+        subtotal: price.discount_price * req.body.quantity,
+      },
+      { where: { id: id }, returning: true }
+    );
+
+    if (updatedCart[1] === 1) {
+      return res
+        .status(200)
+        .json({ status: true, message: "card update successfully" });
+    }
+
+    if (updatedCart === 0) {
       return res.status(404).json({ message: "Cart item not found" });
     }
-
-    const result = await cardModel.findOne({
-      where: { id: updatedCart.id },
-      include: [
-        {
-          model: productModel,
-          attributes: { exclude: ["createdAt", "updatedAt"] },
-        },
-      ],
-    });
-
-    if (!result) {
-      return res.status(400).json({ status: false, message: "Update failed" });
-    }
-    return result
-      .status(200)
-      .json({ status: true, message: "card update successfully" });
   } catch (error) {
     return next(error);
   }
