@@ -19,12 +19,15 @@ exports.fetchCartByUser = async (req, res, next) => {
       quantity: card.quantity,
       subtotal: card.subtotal,
     }));
-    const totalPrice = modifyCard.reduce(
-      (total, card) => total + card.subtotal,
+    const total = modifyCard.reduce((total, card) => total + card.subtotal, 0);
+    const totalPrice = Number(total.toFixed(2));
+    const totalQuantity = modifyCard.reduce(
+      (total, card) => total + card.quantity,
       0
     );
-
-    return res.status(200).json({ status: true, card: modifyCard, totalPrice });
+    return res
+      .status(200)
+      .json({ status: true, card: modifyCard, totalPrice, totalQuantity });
   } catch (error) {
     console.log(error);
     return next(error);

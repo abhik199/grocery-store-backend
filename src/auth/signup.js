@@ -1,59 +1,18 @@
 const { DataTypes } = require("sequelize");
-const ejs = require("ejs");
+
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+
 const fs = require("fs");
 const path = require("path");
-const config = require("../../config/config");
 
 const { userModel, addressesModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
+const emailService = require("../services/emailServices");
 
 // Generate a verification token
 const generateVerificationToken = () => {
   return crypto.randomBytes(20).toString("hex");
-};
-
-const signup = async (name, email, verification_token) => {
-  try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      auth: {
-        user: config.email,
-        pass: config.password,
-      },
-    });
-    const email_url = `${config.url}/auth/verify_email?verificationToken=${verification_token}&email=${email}`;
-    ejs.renderFile(
-      path.join(__dirname, "views/email.ejs"),
-      { email_url, name },
-      (err, data) => {
-        if (err) {
-          console.log(err);
-        }
-
-        const message = {
-          from: "grocery store",
-          to: email,
-          subject: "Verification Mail",
-          html: data,
-        };
-        transporter.sendMail(message, (error, info) => {
-          if (error) {
-            console.log("Error sending email:", error);
-          } else {
-            console.log("Email sent:", info.response);
-          }
-        });
-      }
-    );
-  } catch (error) {
-    console.log("Error sending email:", error);
-  }
 };
 
 exports.userRegistration = async (req, res, next) => {
@@ -103,6 +62,7 @@ exports.userRegistration = async (req, res, next) => {
     });
 
     // signup(user.name, user.email, user.verification_token);    // use only production time
+    emailService(user.name, user.email, user.verification_token);
 
     if (req.file !== undefined && !req.file.length > 0) {
       const imageUrl = req.file.filename;

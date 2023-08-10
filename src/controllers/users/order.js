@@ -41,29 +41,36 @@ exports.createOrder = async (req, res, next) => {
     }
     if (paymentMethod === "COD") {
       // For COD payment, delete items from the user's card
-      let create_order;
-      if (checkCard.length > 0) {
-        for (const cardItem of checkCard) {
-          create_order = await orderModel.create({
-            name: cardItem.name,
-            thumbnail: cardItem.thumbnail,
-            discount_price: cardItem.discount_price,
-            totalItems: cardItem.quantity,
-            totalAmount: cardItem.subtotal,
-            address: req.body.address,
-            method: req.body.paymentMethod,
-            userId: id,
-            productId: cardItem.productId,
-          });
+      const createdOrders = [];
+      for (const cardItem of checkCard) {
+        const create_order = await orderModel.create({
+          name: cardItem.name,
+          thumbnail: cardItem.thumbnail,
+          discount_price: cardItem.discount_price,
+          totalItems: cardItem.quantity,
+          totalAmount: cardItem.subtotal,
+          address: req.body.address,
+          method: req.body.paymentMethod,
+          userId: id,
+          productId: cardItem.productId,
+        });
+        if (!create_order) {
+          return res
+            .status(400)
+            .json({ status: false, message: "Failed to create order" });
         }
+        createdOrders.push(create_order);
       }
-
-      if (!create_order) {
-        return res
-          .status(400)
-          .json({ status: false, message: "Failed to create order" });
+      // update stock
+      for (const order of createdOrders) {
+        const product = await productModel.findOne({
+          where: { id: order.productId },
+        });
+        await productModel.update(
+          { stock: product.stock - order.totalItems },
+          { where: { id: order.productId }, returning: true }
+        );
       }
-
       await cardModel.destroy({ where: { userId: id } });
       return res
         .status(201)
@@ -82,10 +89,11 @@ exports.createOrder = async (req, res, next) => {
           order_id: response.order.id,
           amount: response.order.amount / 100,
         });
-        let create_order;
+
         if (checkCard.length > 0) {
+          const createdOrders = [];
           for (const cardItem of checkCard) {
-            create_order = await orderModel.create({
+            const create_order = await orderModel.create({
               name: cardItem.name,
               thumbnail: cardItem.thumbnail,
               discount_price: cardItem.discount_price,
@@ -97,13 +105,23 @@ exports.createOrder = async (req, res, next) => {
               productId: cardItem.productId,
               order_id: response.order.id,
             });
+            if (!create_order) {
+              return res
+                .status(400)
+                .json({ status: false, message: "Failed to create order" });
+            }
+            createdOrders.push(create_order);
           }
-        }
-
-        if (!create_order) {
-          return res
-            .status(400)
-            .json({ status: false, message: "Failed to create order" });
+          // update stock
+          for (const order of createdOrders) {
+            const product = await productModel.findOne({
+              where: { id: order.productId },
+            });
+            await productModel.update(
+              { stock: product.stock - order.totalItems },
+              { where: { id: order.productId }, returning: true }
+            );
+          }
         }
       }
     }
@@ -145,29 +163,65 @@ exports.requestCancelOrder = async (req, res, next) => {
   try {
     const user = await userModel.findOne({ where: { id: userId } });
     if (!user) {
-      return res.status(404).json({ status: false, message: "User not found" });
+      return res.status(404).json({ status: false, message: "User not valid" });
     }
 
-    const order = await orderModel.findOne({ where: { id: id } });
+    const userInOrder = await orderModel.findOne({ where: { id: id } });
+    if (!userInOrder) {
+      return res.status(404).json({
+        status: false,
+        message: "User associated with the order not found",
+      });
+    }
+
+    const order = await orderModel.findOne({
+      where: { userId: userId },
+    });
     if (!order) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Order not found" });
+      return res.status(400).json({
+        status: false,
+        message: "order not found",
+      });
     }
 
     if (order.status === "Pending") {
       const updateStatus = await orderModel.update(
-        { status: "Cancelled" },
+        {
+          status: "Cancelled",
+        },
         { where: { id: id }, returning: true }
       );
 
-      if (updateStatus[0] > 0) {
+      if (updateStatus[1] === 1) {
+        // update product stock
+        const product = await productModel.findOne({
+          where: { id: order.productId },
+        });
+        await productModel.update(
+          { stock: product.stock + order.totalItems },
+          {
+            where: {
+              id: order.productId,
+            },
+          }
+        );
+        await orderModel.update(
+          { totalItems: 0 },
+          {
+            where: { id: order.id },
+            returning: true,
+          }
+        );
+
         return res.status(200).json({
           status: true,
           message: "Your order has been successfully cancelled",
         });
       }
-      return;
+      return res.status(400).json({
+        status: false,
+        message: "Something went wrong",
+      });
     }
 
     if (order.status === "Cancelled") {

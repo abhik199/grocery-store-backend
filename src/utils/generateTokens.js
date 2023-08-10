@@ -1,15 +1,13 @@
-require("dotenv").config();
-const jwt = require("jsonwebtoken");
-const ENV = require("../../config/env/development");
+const { REFRESH_SECRET } = require("../../config/config");
+const { sign } = require("../services/jwtService");
 
 const generateTokens = async (user) => {
   try {
     const payload = { id: user.id, email: user.email, roles: user.roles };
-    const accessToken = jwt.sign(payload, ENV.JWT_SECRET, {
-      expiresIn: "20d",
-    });
+    const accessToken = sign(payload, "15d");
+    const refreshToken = sign({ payload }, "1y", REFRESH_SECRET);
 
-    return Promise.resolve(accessToken);
+    return Promise.resolve({ accessToken, refreshToken });
   } catch (err) {
     console.log(err);
     return Promise.reject(err);
