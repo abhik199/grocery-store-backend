@@ -106,3 +106,19 @@ exports.fetchAddressByUser = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.fetchAddressByID = async (req, res, next) => {
+  const { id: userId } = req.user;
+  const { id } = req.params;
+  try {
+    const address = await addressesModel.findOne({ where: { id: id } });
+    if (!address) {
+      return res
+        .status(404)
+        .json({ status: false, message: "address not found" });
+    }
+    return res.status(200).json({ status: true, address });
+  } catch (error) {
+    return next(error);
+  }
+};

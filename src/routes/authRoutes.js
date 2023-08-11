@@ -23,6 +23,7 @@ routes.get("/address", auth, AddressCtr.fetchAddressByUser);
 routes.post('/address', auth, AddressCtr.createAddress);
 routes.patch('/address/:id', auth, AddressCtr.updateAddress);
 routes.delete('/address/:id', auth, AddressCtr.deleteAddress);
+routes.get('/address/:id',auth,AddressCtr.fetchAddressByID)
 
 // profile 
 routes.get('/profile', auth, ProfileCtr.getProfile);

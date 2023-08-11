@@ -5,17 +5,28 @@ const app = express();
 const cors = require("cors");
 const path = require("path");
 
+// this is get current ip address
+const ipAddressModule = require("./services/getip");
+const ipAddress = ipAddressModule.ipAddress();
+
+const Url = `https://${ipAddress}:${PORT}`;
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use(morgan("tiny"));
+// morgan code
+morgan.token("complete-url", (req, res) => {
+  const ipAddress = ipAddressModule.ipAddress();
+  return `http://${ipAddress}:${PORT}${req.originalUrl}`;
+});
+app.use(morgan(":method :complete-url :status :response-time ms"));
 
 const port = process.env.PORT || PORT;
 const { connect } = require("../config/database");
 
 app.use(
   cors({
-    // origin: url,    // when use p
+    // origin: Url, // when use p
     exposedHeaders: ["X-Total-Count"], // for pagination
   })
 );
@@ -36,7 +47,7 @@ app.set("view engine", "ejs");
 connect()
   .then(() => {
     app.listen(port, () => {
-      console.log(`Server is running at port ${port}`);
+      console.log(`Server Running here 👉${Url}/`);
     });
   })
   .catch((err) => {

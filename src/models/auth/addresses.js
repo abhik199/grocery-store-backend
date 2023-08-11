@@ -31,7 +31,7 @@ const Addresses = sequelize.define("addresses", {
     type: DataTypes.STRING,
   },
   address_type: {
-    type: DataTypes.ENUM("Home", "Apartment", "Business", "Other"),
+    type: DataTypes.STRING,
   },
   userId: {
     type: DataTypes.INTEGER,
