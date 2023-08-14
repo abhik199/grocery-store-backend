@@ -38,6 +38,9 @@ app.use(express.static("public"));
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/user", require("./routes/userRoutes"));
 app.use("/admin", require("./routes/adminRoutes"));
+app.get("*", async (req, res) => {
+  res.send("404 Api is not found");
+});
 
 app.use(require("../config/errorHandler"));
 

@@ -48,6 +48,10 @@ routes.get('/transactions', [auth, admin],adminTransactions.fetchAllTransactions
 routes.get('/transactions/:id', [auth, admin],adminTransactions.fetchTransactionsById)
 routes.delete('/transactions/:id', [auth, admin], adminTransactions.deleteTransactions)
 
+routes.get('*', async (req, res) => {
+     res.send('404 Api is not found')
+})
+
 // routes.get('/test',adminTransactions.createTransactions)
 
 

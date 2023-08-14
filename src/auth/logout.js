@@ -1,27 +1,24 @@
 const { refreshTokenModel } = require("../models/models");
-const customErrorHandler = require("../../config/customErrorHandler");
 
 exports.logoutUser = async (req, res, next) => {
-  const { token } = req.query;
-  if (!token) {
-    return next(customErrorHandler.requiredField("token"));
-  }
-
-  try {
-    const logOut = await refreshTokenModel.destroy({
-      where: { refresh_token: token },
-    });
-
-    if (!logOut) {
-      return res.status(400).json({ msg: "User logout failed" });
-    }
-
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
     return res
-      .clearCookie("access_token")
-      .status(200)
-      .json({ message: "Logout successful" });
+      .status(400)
+      .json({ status: false, message: "Token is required" });
+  }
+  try {
+    const userToken = await refreshTokenModel.findOne({
+      where: { token: refreshToken },
+    });
+    if (!userToken) {
+      return res
+        .status(200)
+        .json({ status: true, message: "Logged out successfully" });
+    }
+    await refreshTokenModel.destroy({ where: { token: refreshToken } });
+    res.status(200).json({ status: true, message: "Logged out successfully" });
   } catch (error) {
-    next(error);
-    return;
+    return next(error);
   }
 };
