@@ -36,6 +36,9 @@ const transactions = sequelize.define(
     amount: {
       type: DataTypes.FLOAT,
     },
+    order_no: {
+      type: DataTypes.STRING,
+    },
 
     method: {
       type: DataTypes.STRING,
