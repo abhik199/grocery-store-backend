@@ -42,6 +42,8 @@ routes.get("/order/:id", auth, userOrder.fetchOrderById);
 // verify transactions
 routes.post("/verify", auth, verifyTransaction);
 
+routes.get("/invoice");
+
 // product listing
 routes.get("/popular_product", userProduct.fetchAllPopularProduct);
 routes.get("/daily_sells", userProduct.fetchDailyBestSellsProduct);

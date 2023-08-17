@@ -3,9 +3,12 @@ const {
   productModel,
   userModel,
   cardModel,
+  addressesModel,
 } = require("../../models/models");
 const joi = require("joi");
 const { creteOrderId } = require("./payment");
+const generateInvoice = require("../../utils/generateInvoice");
+const invoiceService = require("../../services/invoiceSendServices");
 
 exports.createOrder = async (req, res, next) => {
   const { id } = req.user;
@@ -71,7 +74,33 @@ exports.createOrder = async (req, res, next) => {
           { where: { id: order.productId }, returning: true }
         );
       }
-      await cardModel.destroy({ where: { userId: id } });
+      // let userOrders;
+
+      try {
+        const user = await userModel.findOne({
+          where: { id: createdOrders[0].userId }, // Assuming all orders belong to the same user
+        });
+
+        const userOrders = createdOrders.map((order) => ({
+          id: order.id,
+          name: order.name,
+          discount_price: order.discount_price,
+          quantity: order.totalItems,
+          subtotal: order.totalAmount,
+          address: order.address,
+          method: order.method,
+        }));
+
+        const email = "abhishekkirar199@gmail.com";
+        invoiceService(email, userOrders, user);
+        generateInvoice(email, userOrders, user);
+      } catch (error) {
+        console.error("Error processing orders:", error);
+      }
+
+      return;
+
+      // await cardModel.destroy({ where: { userId: id } });
       return res
         .status(201)
         .json({ status: true, message: "Order created successfully (COD)" });
