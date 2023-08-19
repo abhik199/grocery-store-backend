@@ -8,7 +8,7 @@ const {
 } = require("../../models/models");
 
 const customErrorHandler = require("../../../config/customErrorHandler");
-const { Op } = require("sequelize");
+const { Op, json } = require("sequelize");
 const path = require("path");
 const fs = require("fs");
 const { sequelize } = require("../../../config/database");
@@ -44,6 +44,12 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
       },
       where: whereCondition,
       include: [
+        {
+          model: categoryModel,
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+        },
         {
           model: subcategoryModel,
           attributes: {
@@ -87,6 +93,7 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
         tag: product.tag,
         stock: product.stock,
         description: product.description,
+        category: product.category,
         subcategory: product.subcategories.map(
           (subcategory) => subcategory.subcategory
         ),
@@ -119,6 +126,7 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
       tag: product.tag,
       stock: product.stock,
       description: product.description,
+      category: product.categories.map((category) => category.name),
       subcategory: product.subcategories.map(
         (subcategory) => subcategory.subcategory
       ),

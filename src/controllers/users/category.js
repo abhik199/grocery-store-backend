@@ -65,7 +65,8 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
-    const { name, brand, subcategory, minPrice, maxPrice, sort } = req.query;
+    const { name, brand, category, subcategory, minPrice, maxPrice, sort } =
+      req.query;
     const whereCondition = {};
     if (name) {
       whereCondition.name = { [Op.like]: `%${name}` };
@@ -136,19 +137,17 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
       })));
     }
 
-    if (subcategory) {
-      const subCatProduct = await CallProduct();
-      if (!subCatProduct) {
+    if (category) {
+      const CatProduct = await CallProduct();
+      if (!CatProduct) {
         return res
           .status(404)
           .json({ status: false, message: "Product not found" });
       }
 
-      const filteredProducts = subCatProduct.filter(
+      const filteredProducts = CatProduct.filter(
         (product) =>
-          product.subcategory.some((subcategoryItem) =>
-            subcategoryItem.name.includes(subcategory)
-          ) &&
+          product.category === category &&
           (!brand || product.brand.includes(brand))
       );
 
