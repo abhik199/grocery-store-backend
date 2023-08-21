@@ -1,8 +1,10 @@
 const Razorpay = require("razorpay");
 const { key_id, Key_Secret } = require("../../../config/config");
 const crypto = require("crypto");
-const { cardModel } = require("../../models/models");
+const { cardModel, userModel } = require("../../models/models");
 const { createTransactions } = require("../admin/transactions");
+const invoiceService = require("../../services/invoiceSendServices");
+const generateInvoice = require("../../utils/generateInvoice");
 
 exports.creteOrderId = async (amount) => {
   try {
@@ -42,7 +44,24 @@ exports.verifyTransaction = async (req, res, next) => {
       res
         .status(200)
         .json({ status: true, message: "transaction successfully " });
+      const user = await userModel.findOne({ where: { id: id } });
+      const email = user.email;
+      const data = await cardModel.findAll({ where: { userId: id } });
+
+      const userOrders = data.map((card) => ({
+        name: card.name,
+        discount_price: card.discount_price,
+        quantity: card.quantity,
+        subtotal: card.subtotal,
+        method: "online",
+        address: "test address ",
+      }));
+
+      // generate invoice
+      invoiceService(email, userOrders, user);
+      generateInvoice(email, userOrders, user);
       // delete card items when transaction successfully
+
       await cardModel.destroy({ where: { userId: id } });
 
       //

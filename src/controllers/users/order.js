@@ -91,16 +91,13 @@ exports.createOrder = async (req, res, next) => {
           method: order.method,
         }));
 
-        const email = "abhishekkirar199@gmail.com";
+        const email = user.email;
         invoiceService(email, userOrders, user);
         generateInvoice(email, userOrders, user);
       } catch (error) {
         console.error("Error processing orders:", error);
       }
-
-      return;
-
-      // await cardModel.destroy({ where: { userId: id } });
+      await cardModel.destroy({ where: { userId: id } });
       return res
         .status(201)
         .json({ status: true, message: "Order created successfully (COD)" });

@@ -22,12 +22,10 @@ reviews_ratingModel.belongsTo(productModel, {
   as: "review",
 });
 
-// Assuming you have imported the required models and Sequelize (Op) properly.
-
 exports.fetchAllHotDealProduct = async (req, res, next) => {
   try {
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 12;
+    const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
     const { subcategory, name } = req.query;
@@ -73,10 +71,6 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
         message: "Product not found",
       });
     }
-    const totalCount = await productModel.count({
-      where: whereCondition,
-    });
-    const totalPages = Math.ceil(totalCount / limit);
 
     if (subcategory) {
       const filteredProducts = products.filter((product) =>
@@ -89,6 +83,7 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
         price: product.price,
         brand: product.brand,
         discount_price: product.discount_price,
+        thumbnail: product.thumbnail,
         discount_percentage: product.discount_percentage,
         tag: product.tag,
         stock: product.stock,
@@ -121,6 +116,7 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
       name: product.name,
       price: product.price,
       brand: product.brand,
+      thumbnail: product.thumbnail,
       discount_price: product.discount_price,
       discount_percentage: product.discount_percentage,
       tag: product.tag,
@@ -132,6 +128,8 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
       ),
       image: product.product_images.map((image) => image.images),
     }));
+    const totalCount = await productModel.count();
+    const totalPages = Math.ceil(totalCount / limit);
 
     return res.status(200).json({
       status: true,
@@ -169,14 +167,7 @@ exports.getSingleProduct = async (req, res, next) => {
           },
           as: "review", // Use the original alias "reviews_and_ratings"
         },
-        // {
-        //   model: categoryModel,
-        //   attributes: {
-        //     exclude: ["createdAt", "updatedAt"],
-        //   },
-        //   as: "categories", // Specify the alias used for the category association
-        //   through: { attributes: [] }, // Exclude the join table attributes
-        // },
+
         {
           model: productImgModel,
           attributes: { exclude: ["createdAt", "updatedAt"] },

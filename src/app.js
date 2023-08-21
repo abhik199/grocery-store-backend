@@ -26,12 +26,10 @@ const { connect } = require("../config/database");
 
 app.use(
   cors({
-    // origin: Url, // when use p
     exposedHeaders: ["X-Total-Count"], // for pagination
   })
 );
 
-// when Server deploy use this type "../public"
 app.use(express.static("public"));
 
 // Api Routes

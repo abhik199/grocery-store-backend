@@ -357,7 +357,6 @@
       <body>
         <header>
           <h1>Invoice</h1>
-          <button id="downloadButton">Download Invoice</button>
 
           <address contenteditable>
             <p><%= `${user.first_name} ${user.last_name}` %></p>
@@ -367,17 +366,15 @@
         </header>
         <article>
           <h1>Recipient</h1>
-          <address contenteditable>
-            <p>Some Company<br />c/o Some Guy</p>
-          </address>
           <table class="meta">
             <tr>
               <th><span contenteditable>Invoice #</span></th>
               <td><span contenteditable>101138</span></td>
             </tr>
+            generatedInvoiceNumber
             <tr>
-              <th><span contenteditable>Date</span></th>
-              <td><span contenteditable>January 1, 2012</span></td>
+              <th><span contenteditable><%= generatedInvoiceNumber%></span></th>
+              <td><span contenteditable><%= date%></span></td>
             </tr>
             <tr>
               <th><span contenteditable>Method</span></th>
@@ -437,17 +434,5 @@
         </aside>
       </body>
     </html>
-    <script>
-      const downloadButton = document.getElementById("downloadButton");
-
-      downloadButton.addEventListener("click", async () => {
-        const htmlContent =
-          document.getElementById("invoiceTemplate").innerHTML;
-
-        const pdf = new jsPDF();
-        pdf.fromHTML(htmlContent, 15, 15, { width: 180 });
-        pdf.save("invoice.pdf");
-      });
-    </script>
   </body>
 </html>

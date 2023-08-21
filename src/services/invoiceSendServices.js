@@ -15,10 +15,28 @@ const invoiceService = async (email, userOrders, user) => {
         pass: config.password,
       },
     });
-    //     const email_url = `${config.url}/auth/verify_email?verificationToken=${verification_token}&email=${email}`;
+    const specificDate = new Date("January 1, 2012");
+    const year = specificDate.getFullYear();
+    const month = specificDate.getMonth();
+    const day = specificDate.getDate();
+    const date = `${year}-${month + 1}-${day}`;
+
+    function generateInvoiceNumber(length) {
+      const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let invoiceNumber = "";
+
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        invoiceNumber += characters.charAt(randomIndex);
+      }
+
+      return invoiceNumber;
+    }
+    const generatedInvoiceNumber = generateInvoiceNumber(8);
+
     ejs.renderFile(
       path.join(__dirname, "../../views/invoice.ejs"),
-      { userOrders, user },
+      { userOrders, user, date, generatedInvoiceNumber },
       (err, data) => {
         if (err) {
           console.log(err);
