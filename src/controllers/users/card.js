@@ -158,6 +158,7 @@ exports.deleteFromCart = async (req, res, next) => {
 // Update Card Quantity
 exports.updateCart = async (req, res, next) => {
   const { id } = req.params;
+  const { id: userId } = req.user;
   if (!id) {
     return res.status(400).json({ status: false, message: "card id required" });
   }
@@ -190,11 +191,14 @@ exports.updateCart = async (req, res, next) => {
       },
       { where: { id: id }, returning: true }
     );
+    const card = await cardModel.findAll({ userId: userId });
 
     if (updatedCart[1] === 1) {
-      return res
-        .status(200)
-        .json({ status: true, message: "card update successfully" });
+      return res.status(200).json({
+        status: true,
+        message: "card update successfully",
+        card,
+      });
     }
 
     if (updatedCart === 0) {

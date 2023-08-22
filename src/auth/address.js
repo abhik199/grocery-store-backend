@@ -34,9 +34,11 @@ exports.createAddress = async (req, res, next) => {
         .json({ status: false, message: "Address failed to save" });
     }
 
-    return res
-      .status(201)
-      .json({ status: true, message: "Address successfully saved" });
+    return res.status(201).json({
+      status: true,
+      message: "Address successfully saved",
+      address: create_address,
+    });
   } catch (error) {
     return next(error);
   }
