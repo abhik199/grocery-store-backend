@@ -47,9 +47,9 @@ const generateInvoice = async (email, userOrders, user) => {
       await browser.close();
     }
   }
-  const specificDate = new Date("January 1, 2012");
+  const specificDate = new Date();
   const year = specificDate.getFullYear();
-  const month = specificDate.getMonth(); // January is 0, February is 1, and so on
+  const month = specificDate.getMonth();
   const day = specificDate.getDate();
 
   const date = `${year}-${month + 1}-${day}`;

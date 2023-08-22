@@ -369,11 +369,11 @@
           <table class="meta">
             <tr>
               <th><span contenteditable>Invoice #</span></th>
-              <td><span contenteditable>101138</span></td>
+              <td><span contenteditable><%= generatedInvoiceNumber%></span></td>
             </tr>
-            generatedInvoiceNumber
+
             <tr>
-              <th><span contenteditable><%= generatedInvoiceNumber%></span></th>
+              <th><span contenteditable>Date</span></th>
               <td><span contenteditable><%= date%></span></td>
             </tr>
             <tr>
@@ -407,7 +407,7 @@
               <% total += parseFloat(order.subtotal); %> <% }); %> <%
               shippingCharges = 40; %>
               <tr>
-                <td colspan="4">Shipping Charges (Count: 1)</td>
+                <td colspan="4">Shipping Charges</td>
                 <td>
                   <span data-prefix></span><%= shippingCharges.toFixed(2) %>
                 </td>

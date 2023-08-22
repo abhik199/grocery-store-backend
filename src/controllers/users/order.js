@@ -91,7 +91,8 @@ exports.createOrder = async (req, res, next) => {
           method: order.method,
         }));
 
-        const email = user.email;
+        // const email = user.email;
+        const email = "abhishekkirar199@gmail.com";
         invoiceService(email, userOrders, user);
         generateInvoice(email, userOrders, user);
       } catch (error) {

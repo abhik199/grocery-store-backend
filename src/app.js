@@ -1,4 +1,5 @@
-const { url, PORT } = require("../config/config");
+require("dotenv").config();
+
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
@@ -8,8 +9,8 @@ const path = require("path");
 // this is get current ip address
 const ipAddressModule = require("./services/getip");
 const ipAddress = ipAddressModule.ipAddress();
-
-const Url = `https://${ipAddress}:${PORT}`;
+const port = process.env.PORT || 6900;
+const Url = `https://${ipAddress}:${port}`;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -17,11 +18,10 @@ app.use(express.urlencoded({ extended: false }));
 // morgan code
 morgan.token("complete-url", (req, res) => {
   const ipAddress = ipAddressModule.ipAddress();
-  return `http://${ipAddress}:${PORT}${req.originalUrl}`;
+  return `http://${ipAddress}:${port}${req.originalUrl}`;
 });
 app.use(morgan(":method :complete-url :status :response-time ms"));
 
-const port = process.env.PORT || PORT;
 const { connect } = require("../config/database");
 
 app.use(

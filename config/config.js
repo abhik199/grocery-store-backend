@@ -24,7 +24,6 @@ require("dotenv").config();
 // Development mode
 // config.js
 module.exports = {
-  PORT: process.env.PORT || 6900,
   DB_HOST: process.env.DB_HOST,
   email: process.env.email,
   password: process.env.password,

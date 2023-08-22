@@ -15,10 +15,11 @@ const invoiceService = async (email, userOrders, user) => {
         pass: config.password,
       },
     });
-    const specificDate = new Date("January 1, 2012");
+    const specificDate = new Date();
     const year = specificDate.getFullYear();
     const month = specificDate.getMonth();
     const day = specificDate.getDate();
+
     const date = `${year}-${month + 1}-${day}`;
 
     function generateInvoiceNumber(length) {
