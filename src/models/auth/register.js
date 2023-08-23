@@ -22,7 +22,6 @@ const Users = sequelize.define("user", {
   },
   profile: {
     type: DataTypes.STRING,
-    allowNull: true,
   },
   is_verify: {
     type: DataTypes.BOOLEAN,
@@ -34,7 +33,6 @@ const Users = sequelize.define("user", {
   },
   verification_token: {
     type: DataTypes.STRING,
-    allowNull: true,
   },
   roles: {
     type: DataTypes.ENUM("user", "admin"),
