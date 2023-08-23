@@ -4,15 +4,16 @@ const path = require("path");
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === "product_images") {
-      cb(null, path.join(process.cwd(), "public/product"));
+      uploadPath = path.join(__dirname, "../public/product");
     } else if (file.fieldname === "profile") {
-      cb(null, path.join(process.cwd(), "public/profile"));
+      uploadPath = path.join(__dirname, "../public/profile");
     } else if (file.fieldname === "category_image") {
-      cb(null, path.join(process.cwd(), "public/category"));
+      uploadPath = path.join(__dirname, "../public/category");
     } else if (file.fieldname === "subcategory_image") {
-      cb(null, path.join(process.cwd(), "public/subcategory"));
+      uploadPath = path.join(__dirname, "../public/subcategory");
     } else {
       console.log(`multer problem ${file.fieldname}`);
+      return cb(new Error("Invalid fieldname"));
     }
   },
   filename: (req, file, cb) => {
