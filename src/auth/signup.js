@@ -107,8 +107,8 @@ exports.verifyEmail = async (req, res, next) => {
     const updateUser = await userModel.update(
       {
         is_verify: true,
-        verification_token: "null",
-        expiration_time: "null",
+        verification_token: null,  // Pass null without quotes
+        expiration_time: null,     // Pass null without quotes
       },
       { where: { verification_token: verificationToken } }
     );
@@ -121,3 +121,4 @@ exports.verifyEmail = async (req, res, next) => {
     return next(error);
   }
 };
+
