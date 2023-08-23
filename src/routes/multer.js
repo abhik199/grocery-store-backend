@@ -6,7 +6,7 @@ const fileStorage = multer.diskStorage({
     if (file.fieldname === "product_images") {
       uploadPath = path.join(__dirname, "../public/product");
     } else if (file.fieldname === "profile") {
-      uploadPath = path.join(__dirname, "../public/profile");
+      (cb, "../../public/profile");
     } else if (file.fieldname === "category_image") {
       uploadPath = path.join(__dirname, "../public/category");
     } else if (file.fieldname === "subcategory_image") {
