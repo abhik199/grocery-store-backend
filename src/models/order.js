@@ -43,6 +43,10 @@ const Order = sequelize.define("order", {
   productId: {
     type: DataTypes.INTEGER,
   },
+  addressId: {
+    type: DataTypes.INTEGER,
+  },
+
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,

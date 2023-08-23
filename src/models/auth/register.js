@@ -26,7 +26,7 @@ const Users = sequelize.define("user", {
   },
   is_verify: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true,
+    defaultValue: false,
   },
   expiration_time: {
     type: DataTypes.DATE,
@@ -37,7 +37,7 @@ const Users = sequelize.define("user", {
     allowNull: true,
   },
   roles: {
-    type: DataTypes.ENUM("user", "admin"), // Pass the allowed
+    type: DataTypes.ENUM("user", "admin"),
     defaultValue: "user",
   },
 });

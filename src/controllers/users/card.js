@@ -171,11 +171,11 @@ exports.updateCart = async (req, res, next) => {
       where: { id: price.productId },
     });
 
-    if (!(req.body.quantity > 0)) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Quantity must be greater than 0" });
-    }
+    // if (!(req.body.quantity >=1)) {
+    //   return res
+    //     .status(400)
+    //     .json({ status: false, message: "Quantity must be greater than 0" });
+    // }
 
     if (!(req.body.quantity <= product.stock)) {
       return res.status(400).json({
@@ -191,7 +191,14 @@ exports.updateCart = async (req, res, next) => {
       },
       { where: { id: id }, returning: true }
     );
-    const card = await cardModel.findAll({ userId: userId });
+    if (req.body.quantity === 0) {
+      await cardModel.destroy({ where: { id: id } });
+      const card = await cardModel.findAll({ where: { userId: userId } });
+      return res
+        .status(200)
+        .json({ status: false, message: "card remove successfully", card });
+    }
+    const card = await cardModel.findAll({ where: { userId: userId } });
 
     if (updatedCart[1] === 1) {
       return res.status(200).json({
