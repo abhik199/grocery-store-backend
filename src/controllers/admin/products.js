@@ -90,14 +90,13 @@ exports.createProducts = async (req, res, next) => {
       }
 
       // Create product-category association
-      await productCategoryModels.create({
+      const productC = await productCategoryModels.create({
         categoryId: categoryId,
         productId: product.id,
       });
 
       // Create product-subcategory associations
       const subcategories = subcategoryId.split(",");
-      console.log(subcategories);
 
       for (let i = 0; i < subcategories.length; i++) {
         const subcategoryId = parseInt(subcategories[i]);
@@ -105,12 +104,17 @@ exports.createProducts = async (req, res, next) => {
           subcategoryId: subcategoryId,
           productId: product.id,
         });
+        const count = await productSubCategoryModels.count({
+          where: { subcategoryId: subcategoryId },
+        });
+
+        await subcategoryModel.update(
+          { items: count },
+          { where: { id: subcategoryId } }
+        );
       }
 
-      // count product update sub category items fields
-      const productCount = await productSubCategoryModels.findAll({
-        where: { productId: product.id },
-      });
+      // count product items
 
       if (req.files !== undefined && req.files.length > 0) {
         const imageFiles = req.files;
