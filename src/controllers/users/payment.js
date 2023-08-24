@@ -9,7 +9,7 @@ const {
 } = require("../../models/models");
 const { createTransactions } = require("../admin/transactions");
 const invoiceService = require("../../services/invoiceSendServices");
-const generateInvoice = require("../../utils/generateInvoice");
+
 
 exports.creteOrderId = async (amount) => {
   try {
@@ -65,7 +65,7 @@ exports.verifyTransaction = async (req, res, next) => {
 
       // generate invoice
       invoiceService(email, userOrders, user);
-      generateInvoice(email, userOrders, user);
+     
       // delete card items when transaction successfully
 
       await cardModel.destroy({ where: { userId: id } });

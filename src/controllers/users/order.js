@@ -7,7 +7,7 @@ const {
 } = require("../../models/models");
 const joi = require("joi");
 const { creteOrderId } = require("./payment");
-const generateInvoice = require("../../utils/generateInvoice");
+
 const invoiceService = require("../../services/invoiceSendServices");
 
 exports.createOrder = async (req, res, next) => {
@@ -94,7 +94,7 @@ exports.createOrder = async (req, res, next) => {
         const email = user.email;
 
         invoiceService(email, userOrders, user);
-        generateInvoice(email, userOrders, user);
+       
       } catch (error) {
         console.error("Error processing orders:", error);
       }

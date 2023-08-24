@@ -1,20 +1,32 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
+    let uploadPath = ""; // Define the upload path
+    
     if (file.fieldname === "product_images") {
-      uploadPath = path.join(__dirname, "../public/product");
+      uploadPath = path.join(__dirname, "../../public/product");
     } else if (file.fieldname === "profile") {
-      uploadPath = path.join(__dirname, "../public/profile");
+      uploadPath = path.join(__dirname, "../../public/profile");
     } else if (file.fieldname === "category_image") {
-      uploadPath = path.join(__dirname, "../public/category");
+      uploadPath = path.join(__dirname, "../../public/category");
     } else if (file.fieldname === "subcategory_image") {
-      uploadPath = path.join(__dirname, "../public/subcategory");
+      uploadPath = path.join(__dirname, "../../public/subcategory");
     } else {
       console.log(`multer problem ${file.fieldname}`);
       return cb(new Error("Invalid fieldname"));
     }
+
+    // Use fs module to create the folder
+    fs.mkdir(uploadPath, { recursive: true }, (err) => {
+      if (err) {
+        console.error('Error creating folder:', err);
+        return cb(err);
+      }
+      cb(null, uploadPath);
+    });
   },
   filename: (req, file, cb) => {
     cb(

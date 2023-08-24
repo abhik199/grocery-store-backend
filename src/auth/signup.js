@@ -47,6 +47,7 @@ exports.userRegistration = async (req, res, next) => {
     user.password = hashPassword;
     user.verification_token = verificationToken;
     user.expiration_time = expirationTime;
+    console.log(req.file)
 
     const createUser = await userModel.create(user);
     if (!createUser || !createUser.length === 0) {
@@ -106,8 +107,7 @@ exports.verifyEmail = async (req, res, next) => {
     const updateUser = await userModel.update(
       {
         is_verify: true,
-        verification_token: "null",
-        expiration_time: "null",
+        verification_token: null,
       },
       { where: { verification_token: verificationToken } }
     );
@@ -119,4 +119,5 @@ exports.verifyEmail = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
-};
+}
+
