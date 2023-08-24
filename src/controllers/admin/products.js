@@ -105,6 +105,13 @@ exports.createProducts = async (req, res, next) => {
           subcategoryId: subcategoryId,
           productId: product.id,
         });
+         const count = await productSubCategoryModels.count({
+          where: { subcategoryId: subcategoryId },
+        });
+        await subcategoryModel.update(
+          { items: count },
+          { where: { id: subcategoryId } }
+        );
       }
 
       // count product update sub category items fields
