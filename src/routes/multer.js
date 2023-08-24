@@ -7,13 +7,13 @@ const fileStorage = multer.diskStorage({
     let uploadPath = ""; // Define the upload path
     
     if (file.fieldname === "product_images") {
-      uploadPath = path.join(__dirname, "../public/product");
+      uploadPath = path.join(__dirname, "../../public/product");
     } else if (file.fieldname === "profile") {
       uploadPath = path.join(__dirname, "../../public/profile");
     } else if (file.fieldname === "category_image") {
-      uploadPath = path.join(__dirname, "../public/category");
+      uploadPath = path.join(__dirname, "../../public/category");
     } else if (file.fieldname === "subcategory_image") {
-      uploadPath = path.join(__dirname, "../public/subcategory");
+      uploadPath = path.join(__dirname, "../../public/subcategory");
     } else {
       console.log(`multer problem ${file.fieldname}`);
       return cb(new Error("Invalid fieldname"));
