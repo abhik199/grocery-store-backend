@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require('fs');
 const ejs = require("ejs");
 const puppeteer = require("puppeteer");
 const path = require("path");
@@ -69,11 +69,12 @@ const generateInvoice = async (email, userOrders, user) => {
     generatedInvoiceNumber,
     date,
   });
+  const pdfFolderPath = path.join(__dirname, '../../public/invoice');
 
-  const pdfOutputPath = path.join(
-    __dirname,
-    `../../public/invoice/${pdfFileName}`
-  );
+  const pdfOutputPath = path.join(pdfFolderPath, pdfFileName);
+  if (!fs.existsSync(pdfFolderPath)) {
+  fs.mkdirSync(pdfFolderPath, { recursive: true });
+}
 
   generatePDFFromHTML(renderedHTML, pdfOutputPath, pdfFileName);
 };
