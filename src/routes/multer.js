@@ -1,11 +1,10 @@
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     let uploadPath = ""; // Define the upload path
-    
+
     if (file.fieldname === "product_images") {
       uploadPath = path.join(__dirname, "../../public/product");
     } else if (file.fieldname === "profile") {
@@ -22,7 +21,7 @@ const fileStorage = multer.diskStorage({
     // Use fs module to create the folder
     fs.mkdir(uploadPath, { recursive: true }, (err) => {
       if (err) {
-        console.error('Error creating folder:', err);
+        console.error("Error creating folder:", err);
         return cb(err);
       }
       cb(null, uploadPath);

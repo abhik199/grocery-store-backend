@@ -102,7 +102,7 @@ exports.fetchAllByCategoryId = async (req, res, next) => {
             {
               model: subcategoryModel,
               attributes: { exclude: ["createdAt", "updatedAt"] },
-              as: "subcategories",
+              // as: "subcategories",
             },
           ],
         },
