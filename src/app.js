@@ -13,11 +13,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(morgan("dev"));
 
-app.use(
-  cors({
-    exposedHeaders: ["X-Total-Count"], // for pagination
-  })
-);
+app.use(cors());
 
 app.use(express.static("public"));
 app.use("/auth", require("./routes/authRoutes"));
