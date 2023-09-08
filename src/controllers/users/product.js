@@ -43,7 +43,7 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
        where: {
         ...whereCondition, 
         stock: {
-          [Sequelize.Op.lte]: 0, 
+          [Sequelize.Op.gt]: 0, 
         },
       },
       include: [
