@@ -8,7 +8,7 @@ const {
 } = require("../../models/models");
 
 const customErrorHandler = require("../../../config/customErrorHandler");
-const { Op, json } = require("sequelize");
+const { Op, json,Sequelize } = require("sequelize");
 const path = require("path");
 const fs = require("fs");
 const { sequelize } = require("../../../config/database");
@@ -40,7 +40,12 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
       attributes: {
         exclude: ["createdAt", "updatedAt"],
       },
-      where: whereCondition,
+       where: {
+        ...whereCondition, 
+        stock: {
+          [Sequelize.Op.lte]: 0, 
+        },
+      },
       include: [
         {
           model: categoryModel,
