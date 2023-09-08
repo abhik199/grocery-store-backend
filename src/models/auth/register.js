@@ -29,7 +29,6 @@ const Users = sequelize.define("user", {
   },
   expiration_time: {
     type: DataTypes.DATE,
-    allowNull: false,
   },
   verification_token: {
     type: DataTypes.STRING,
