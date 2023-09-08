@@ -108,6 +108,7 @@ exports.verifyEmail = async (req, res, next) => {
       {
         is_verify: true,
         verification_token: null,
+        expiration_time:null,
       },
       { where: { verification_token: verificationToken } }
     );
