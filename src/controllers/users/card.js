@@ -88,10 +88,11 @@ exports.addToCart = async (req, res, next) => {
       if (updateResult) {
         // after delivered product then update product
         // await update_Stock(find_productId, q);
+         const cardItems = await cardModel.findAll({ where: { userId: userId } });
 
         return res
           .status(200)
-          .json({ status: true, message: "Card updated successfully" });
+          .json({ status: true, message: "Card updated successfully",cardItems});
       } else {
         return res
           .status(400)
