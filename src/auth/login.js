@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const { userModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
 const generateTokens = require("../utils/generateTokens");
+const { Op } = require("sequelize");
 
 exports.userLogin = async (req, res, next) => {
   const { email, password } = req.body;
