@@ -116,11 +116,11 @@ exports.addToCart = async (req, res, next) => {
       }
       // after delivered product then update product
       // await update_Stock(find_productId, q);
-       const cardItems = await cardModel.findAll({ where: { userId: userId } });
+       const card = await cardModel.findAll({ where: { userId: userId } });
 
       return res
         .status(201)
-        .json({ status: true, message: "Card created successfully",cardItems });
+        .json({ status: true, message: "Card created successfully",card });
     }
 
     // update stock in product modules
