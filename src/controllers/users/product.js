@@ -133,7 +133,7 @@ exports.fetchAllHotDealProduct = async (req, res, next) => {
       ),
       image: product.product_images.map((image) => image.images),
     }));
-    const totalCount = await productModel.count();
+    const totalCount = await modifiedProduct.length;
     const totalPages = Math.ceil(totalCount / limit);
 
     return res.status(200).json({
