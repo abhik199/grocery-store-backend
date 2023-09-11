@@ -9,6 +9,19 @@ exports.userLogin = async (req, res, next) => {
   if (!email || !password) {
     return next(customErrorHandler.requiredField());
   }
+    const users = await userModel.findAll({
+    where: {
+      expiration_time: {
+        [Op.lt]: new Date(),
+      },
+      is_verify: false,
+    },
+  });
+  users.forEach(async (user) => {
+    for (const id in user) {
+      await userModel.destroy({ where: { id: user.id } });
+    }
+  });
 
   try {
     const user = await userModel.findOne({
