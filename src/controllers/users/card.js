@@ -150,7 +150,7 @@ exports.deleteFromCart = async (req, res, next) => {
     if (delete_item === 1) {
       return res
         .status(200)
-        .json({ status: true, message: 'Cart item deleted successfully"' });
+        .json({ status: true, message: "Cart item deleted successfully",card });
     }
     return res.status(400).json({ status: false, message: "delete failed" });
   } catch (error) {
