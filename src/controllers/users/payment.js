@@ -52,7 +52,9 @@ exports.verifyTransaction = async (req, res, next) => {
       const user = await userModel.findOne({ where: { id: id } });
       const email = user.email;
       const data = await cardModel.findAll({ where: { userId: id } });
-      const order = await orderModel.findAll({ where: { userId: id } });
+     const order = await orderModel.findOne({ where: { order_id: razorpay_order_id } });
+    const address = order.address;
+
 
       const userOrders = data.map((card) => ({
         name: card.name,
@@ -60,7 +62,7 @@ exports.verifyTransaction = async (req, res, next) => {
         quantity: card.quantity,
         subtotal: card.subtotal,
         method: "online",
-        address: "Sohna Rd, Block S, Uppal Southend, Sector 49 Indore ",
+        address:address,
       }));
 
       // generate invoice
