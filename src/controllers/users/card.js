@@ -18,6 +18,7 @@ exports.fetchCartByUser = async (req, res, next) => {
       discount_price: card.discount_price,
       quantity: card.quantity,
       subtotal: card.subtotal,
+      productId: card.productId,
     }));
     const total = modifyCard.reduce((total, card) => total + card.subtotal, 0);
     const totalPrice = Number(total.toFixed(2));
