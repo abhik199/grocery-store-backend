@@ -38,7 +38,7 @@ exports.userRegistration = async (req, res, next) => {
       }
      return res.status(400).json({
   status: false,
-  statusCode: 400, // Include the status code separately
+  statusCode: 400,
   message: 'Email is already taken',
 });
     }
