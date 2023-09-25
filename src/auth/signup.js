@@ -36,7 +36,10 @@ exports.userRegistration = async (req, res, next) => {
           }
         });
       }
-      return next(customErrorHandler.alreadyExist());
+      return res.status(400).json({
+      status: false,
+      message: 'Email is already taken',
+    });
     }
     const user = req.body;
 
