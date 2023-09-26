@@ -38,6 +38,7 @@ exports.userRegistration = async (req, res, next) => {
       }
      return res.status(200).json({
   status: false,
+  statusCode:200,
   message: 'Email is already taken',
 });
     }
@@ -61,6 +62,7 @@ exports.userRegistration = async (req, res, next) => {
     }
     res.status(201).json({
       status: true,
+      statusCode:201,
       message: "Registration Successfully",
     });
 
