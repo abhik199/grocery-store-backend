@@ -5,6 +5,7 @@ const crypto = require("crypto");
 
 const fs = require("fs");
 const path = require("path");
+const ejs = require("ejs");
 
 const { userModel, addressesModel } = require("../models/models");
 const customErrorHandler = require("../../config/customErrorHandler");
@@ -119,7 +120,13 @@ exports.verifyEmail = async (req, res, next) => {
     if (!updateUser) {
       return res.status(409).send("Email Verification failed");
     }
-    return res.status(200).send("email verification successfully");
+    ejs.renderFile(path.join(__dirname, "../../views/verification.ejs"), (err, renderedHTML) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.send(renderedHTML);
+      }
+    });
   } catch (error) {
     return next(error);
   }
