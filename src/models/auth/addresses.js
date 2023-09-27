@@ -30,9 +30,7 @@ const Addresses = sequelize.define("addresses", {
   address: {
     type: DataTypes.STRING,
   },
-  address_type: {
-    type: DataTypes.STRING,
-  },
+
   userId: {
     type: DataTypes.INTEGER,
     references: {
