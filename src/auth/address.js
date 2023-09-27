@@ -11,7 +11,7 @@ exports.createAddress = async (req, res, next) => {
     city: joi.string().required(),
     post_code: joi.number(),
     address: joi.string().required(),
-    address_type: joi.string().required(),
+   
   });
   const { error } = addressSchema.validate(req.body);
   if (error) {
