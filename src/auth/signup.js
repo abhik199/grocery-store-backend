@@ -52,6 +52,7 @@ exports.userRegistration = async (req, res, next) => {
     user.password = hashPassword;
     user.verification_token = verificationToken;
     user.expiration_time = expirationTime;
+     user.default_address = req.body.address;
    
     const createUser = await userModel.create(user);
     if (!createUser || !createUser.length === 0) {
