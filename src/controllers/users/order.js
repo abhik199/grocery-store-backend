@@ -100,9 +100,7 @@ exports.createOrder = async (req, res, next) => {
       }
       await cardModel.destroy({ where: { userId: id } });
       return res
-        .status(201),
-       
-        .json({ status: true, message: "Order created successfully (COD)",  orders: createdOrders });
+        .status(201).json({ status: true, message: "Order created successfully (COD)",  orders: createdOrders });
     } else if (paymentMethod === "online") {
       const amount = checkCard.reduce(
         (total, card) => total + card.subtotal,
