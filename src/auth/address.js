@@ -103,7 +103,22 @@ exports.fetchAddressByUser = async (req, res, next) => {
         .status(404)
         .json({ status: false, message: "address not found" });
     }
-    return res.status(200).json({ status: true, address });
+    const combinedAddresses = [
+      { default_address: user.default_address },
+      ...address.map((addr) => ({
+        id: addr.id,
+        full_name: addr.full_name,
+        contact: addr.contact,
+        country: addr.country,
+        state: addr.state,
+        city: addr.city,
+        post_code: addr.post_code,
+        address: addr.address,
+        address_type: addr.address_type,
+        userId: addr.userId,
+      })),
+    ];
+    return res.status(200).json({ status: true, address:combinedAddresses });
   } catch (error) {
     return next(error);
   }
