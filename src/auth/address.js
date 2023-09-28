@@ -103,6 +103,7 @@ exports.fetchAddressByUser = async (req, res, next) => {
         .status(404)
         .json({ status: false, message: "address not found" });
     }
+     const user = await userModel.findOne({ where: { id: id } });
     const combinedAddresses = [
       { default_address: user.default_address },
       ...address.map((addr) => ({
