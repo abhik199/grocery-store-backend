@@ -23,6 +23,9 @@ const Users = sequelize.define("user", {
   profile: {
     type: DataTypes.STRING,
   },
+  default_address: {
+    type: DataTypes.STRING,
+  },
   is_verify: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
