@@ -106,7 +106,9 @@ exports.fetchAddressByUser = async (req, res, next) => {
     }
      const user = await userModel.findOne({ where: { id: id } });
     const combinedAddresses = [
-      { default_address: user.default_address },
+      { user.default_address,
+       full_name:`${user.first_name} ${user.last_name}`
+      },
       ...address.map((addr) => ({
         id: addr.id,
         full_name: addr.full_name,
