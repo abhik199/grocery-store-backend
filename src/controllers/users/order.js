@@ -108,14 +108,9 @@ exports.createOrder = async (req, res, next) => {
       );
 
       const response = await creteOrderId(amount);
-      if (response) {
-        res.status(201).json({
-          status: true,
-          orders: createdOrders,
-          message: "Order created successfully (online payment)",
-          order_id: response.order.id,
-          amount: response.order.amount / 100,
-        });
+      if (!response) {
+        return res.json({message:"something went wrong payemnet"})
+      }
 
         if (checkCard.length > 0) {
           const createdOrders = [];
@@ -138,7 +133,14 @@ exports.createOrder = async (req, res, next) => {
                 .json({ status: false, message: "Failed to create order" });
             }
             createdOrders.push(create_order);
-          }
+            res.status(201).json({
+            status: true,
+              orders:createdOrders,
+            message: "Order created successfully (online payment)",
+            order_id: response.order.id,
+            amount: response.order.amount / 100,
+        });
+          
           // update stock
           for (const order of createdOrders) {
             const product = await productModel.findOne({
