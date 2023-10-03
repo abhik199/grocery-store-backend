@@ -104,25 +104,7 @@ exports.fetchAddressByUser = async (req, res, next) => {
         .status(404)
         .json({ status: false, message: "address not found" });
     }
-     const user = await userModel.findOne({ where: { id: id } });
-    const combinedAddresses = [
-      { address:user.default_address,
-       full_name:`${user.first_name} ${user.last_name}`
-      },
-      ...address.map((addr) => ({
-        id: addr.id,
-        full_name: addr.full_name,
-        contact: addr.contact,
-        country: addr.country,
-        state: addr.state,
-        city: addr.city,
-        post_code: addr.post_code,
-        address: addr.address,
-        address_type: addr.address_type,
-        userId: addr.userId,
-      })),
-    ];
-    return res.status(200).json({ status: true, address:combinedAddresses });
+    return res.status(200).json({ status: true, address });
   } catch (error) {
     return next(error);
   }
