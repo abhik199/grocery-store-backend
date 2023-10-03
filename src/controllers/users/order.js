@@ -165,6 +165,9 @@ exports.fetchAllOrderByUse = async (req, res, next) => {
   if (!user) {
     return res.status(400).json({ status: false, message: "User not found" });
   }
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 5;
+  const offset = (page - 1) * limit;
 
   try {
     const Order = await orderModel.findAll({
@@ -175,7 +178,15 @@ exports.fetchAllOrderByUse = async (req, res, next) => {
     if (Order.length === 0) {
       return res.status(404).json({ status: false, message: "No order found" });
     }
-    return res.status(200).json({ status: true, order: Order });
+    const totalCount = Order.length;
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    return res.status(200).json({ 
+        status: true, 
+        order: Order, 
+        totalPages,
+        totalItems: totalCount,
+        currentPage: page, });
   } catch (error) {
     return next(error);
   }
