@@ -84,7 +84,7 @@ exports.deleteAddress = async (req, res, next) => {
     }
     const address = await addressesModel.destroy({ where: { id: id } });
     if (!address) {
-      return res.status(400).json({ status: false, message: "Delete failed" });
+      return res.status(400).json({ status: false, message: "Delete failed",address });
     }
     return res.status(200).json({ status: true, message: "Address deleted" });
   } catch (error) {
