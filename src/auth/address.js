@@ -12,6 +12,7 @@ exports.createAddress = async (req, res, next) => {
     city: joi.string().required(),
     post_code: joi.number(),
     address: joi.string().required(),
+    
    
   });
   const { error } = addressSchema.validate(req.body);
@@ -84,7 +85,7 @@ exports.deleteAddress = async (req, res, next) => {
     }
     const address = await addressesModel.destroy({ where: { id: id } });
     if (!address) {
-      return res.status(400).json({ status: false, message: "Delete failed",address });
+      return res.status(400).json({ status: false, message: "Delete failed",address:user });
     }
     return res.status(200).json({ status: true, message: "Address deleted" });
   } catch (error) {
