@@ -171,9 +171,11 @@ exports.fetchAllOrderByUse = async (req, res, next) => {
 
   try {
     const Order = await orderModel.findAll({
-      where: { userId: id },
-      attributes: { exclude: ["createdAt", "updatedAt"] },
-    });
+    where: { userId: id },
+    attributes: { exclude: ["createdAt", "updatedAt"] },
+    limit: limit,
+    offset: offset
+  });
 
     if (Order.length === 0) {
       return res.status(404).json({ status: false, message: "No order found" });
